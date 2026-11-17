@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jet Profile Explained</title>
+<meta name="description" content="Jet profile across the line in shot peening: uniform and Gaussian profiles, equations and overlap of neighbouring raster lines.">
+<meta name="author" content="Dr Régis Kubler, Arts et Métiers Institute of Technology">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f5a96'/%3E%3Crect y='40' width='64' height='24' fill='%23c9d2dc'/%3E%3Cpath d='M8 44h48' stroke='%23f08a4b' stroke-width='4' stroke-dasharray='6 4'/%3E%3Ccircle cx='32' cy='22' r='10' fill='%23f08a4b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column — explanation, interactive profile plot, equations, overlap of neighbouring lines */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#17202a; --muted:#5b6672; --line:#d3d9df;
+  --gauss:#1f5a96; --unif:#d4621c; --sum:#2e8b57; --soft:#f6f8fa; --shade:rgba(31,90,150,.14);
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6ebf0; --muted:#9aa6b2; --line:#2b3642;
+  --gauss:#6aa7e6; --unif:#f08a4b; --sum:#5cc08a; --soft:#1e2731; --shade:rgba(106,167,230,.18); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6ebf0; --muted:#9aa6b2; --line:#2b3642;
+  --gauss:#6aa7e6; --unif:#f08a4b; --sum:#5cc08a; --soft:#1e2731; --shade:rgba(106,167,230,.18); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.6;padding-inline:16px;padding-block:24px 48px;margin:0}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header p.byline{margin:0 0 .35rem;font-size:13px;color:var(--muted)}
+header p.byline b{color:var(--ink);font-weight:600}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,3vw,2rem);letter-spacing:-.01em;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+p{margin:0;max-width:72ch}
+.lead{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--soft);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{margin:0;font-size:15px}
+.card h3 .dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+math{font-size:1.08em}
+.eq{overflow-x:auto;padding:6px 0}
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{font-family:var(--f-mono);font-size:11px;fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);align-items:center}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.ctrl label{display:flex;align-items:center;gap:8px;font-size:14px}
+.ctrl input[type=range]{width:min(220px,50vw);accent-color:var(--unif)}
+.ctrl output{font-family:var(--f-mono);min-width:5em}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.read{background:var(--soft);border-radius:8px;padding:8px 10px}
+.read .k{font-size:12px;color:var(--muted);line-height:1.3}
+.read .v{font-family:var(--f-mono);font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
+ul{margin:0;padding-left:1.2em;max-width:72ch}
+li{margin:.2em 0}
+.note{font-size:13px;color:var(--muted)}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="byline"><b>Dr Régis Kubler</b>, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026 · companion page of the Extended Shot Peening Coverage Simulator</p>
+  <h1>Jet profile across the line</h1>
+  <p class="lead">The jet profile describes how the shots are spread across the width of the jet: what share of the shots lands at each distance y from the jet axis. It decides whether neighbouring lines of a raster blend into an even treatment or leave stripes.</p>
+</header>
+
+<section class="panel" aria-label="Profile plot">
+  <h2>The two profiles along the jet width</h2>
+  <div class="ctrl">
+    <label for="dx">Jet size ΔX <input type="range" id="dx" min="2" max="60" step="0.5" value="20"><output id="dxo">20 mm</output></label>
+  </div>
+  <div class="legend">
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--gauss)" stroke-width="3"/></svg>Gaussian, σⱼ = ΔX/4</span>
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--unif)" stroke-width="3" stroke-dasharray="6 4"/></svg>uniform (top-hat)</span>
+    <span><svg width="16" height="12" aria-hidden="true"><rect width="16" height="12" fill="var(--shade)"/></svg>Gaussian shots inside ΔX (95.4 %)</span>
+  </div>
+  <svg class="chart" id="prof" viewBox="0 0 640 330" role="img" aria-label="Shot density across the jet width for the Gaussian and uniform profiles"></svg>
+  <div class="reads">
+    <div class="read"><div class="k">σⱼ = ΔX/4</div><div class="v" id="rs">–</div></div>
+    <div class="read"><div class="k">Gaussian peak g(0) = 1.596/ΔX</div><div class="v" id="rg0">–</div></div>
+    <div class="read"><div class="k">Uniform level 1/ΔX</div><div class="v" id="ru">–</div></div>
+    <div class="read"><div class="k">Gaussian at y = ±ΔX/2</div><div class="v" id="re">–</div></div>
+  </div>
+  <p class="note">Both curves enclose the same area (∫ g dy = 1): the same number of shots, spread differently. The Gaussian jet is 1.6 times denser on its axis, falls to 13.5 % of its peak at the edges of ΔX, and puts 4.6 % of the shots just outside ΔX.</p>
+</section>
+
+<section class="panel" aria-label="Equations">
+  <h2>Equations</h2>
+  <div class="two">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--gauss)"></span>Gaussian jet</h3>
+      <div class="eq"><math display="block"><mi>g</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mn>1</mn><mrow><msqrt><mrow><mn>2</mn><mi>π</mi></mrow></msqrt><mspace width="0.15em"/><msub><mi>σ</mi><mi>j</mi></msub></mrow></mfrac><mspace width="0.2em"/><mi>exp</mi><mo>(</mo><mo>−</mo><mfrac><msup><mi>y</mi><mn>2</mn></msup><mrow><mn>2</mn><msubsup><mi>σ</mi><mi>j</mi><mn>2</mn></msubsup></mrow></mfrac><mo>)</mo></math></div>
+      <p>With σⱼ = ΔX/4:</p>
+      <div class="eq"><math display="block"><mi>g</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mn>4</mn><mrow><msqrt><mrow><mn>2</mn><mi>π</mi></mrow></msqrt><mspace width="0.15em"/><mi>Δ</mi><mi>X</mi></mrow></mfrac><mspace width="0.2em"/><msup><mi>e</mi><mrow><mo>−</mo><mn>8</mn><msup><mi>y</mi><mn>2</mn></msup><mo>/</mo><mi>Δ</mi><msup><mi>X</mi><mn>2</mn></msup></mrow></msup><mo>≈</mo><mfrac><mn>1.596</mn><mrow><mi>Δ</mi><mi>X</mi></mrow></mfrac><mspace width="0.2em"/><msup><mi>e</mi><mrow><mo>−</mo><mn>8</mn><msup><mi>y</mi><mn>2</mn></msup><mo>/</mo><mi>Δ</mi><msup><mi>X</mi><mn>2</mn></msup></mrow></msup></math></div>
+      <ul><li>Densest on the axis, decreasing smoothly: closer to a real nozzle.</li><li>ΔX spans ±2σⱼ and contains 95.4 % of the shots.</li></ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--unif)"></span>Uniform (top-hat) jet</h3>
+      <div class="eq"><math display="block"><mi>g</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mrow><mo>{</mo><mtable columnalign="left"><mtr><mtd><mfrac><mn>1</mn><mrow><mi>Δ</mi><mi>X</mi></mrow></mfrac></mtd><mtd><mtext>if </mtext><mo>|</mo><mi>y</mi><mo>|</mo><mo>≤</mo><mi>Δ</mi><mi>X</mi><mo>/</mo><mn>2</mn></mtd></mtr><mtr><mtd><mn>0</mn></mtd><mtd><mtext>otherwise</mtext></mtd></mtr></mtable></mrow></math></div>
+      <ul><li>The same density everywhere inside ΔX, none outside.</li><li>The model of the original spreadsheet (one line, step δ = ΔX).</li></ul>
+    </div>
+  </div>
+  <p>In both cases g is a fraction of the shots per mm of width (mm⁻¹) and <math><mo>∫</mo><mi>g</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mspace width="0.1em"/><mi>d</mi><mi>y</mi><mo>=</mo><mn>1</mn></math>. One line of the raster, at position y<sub>j</sub>, leaves</p>
+  <div class="eq"><math display="block"><mi>N</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mover><mi>N</mi><mo>˙</mo></mover><mi>V</mi></mfrac><mspace width="0.2em"/><mi>g</mi><mo stretchy="false">(</mo><mi>y</mi><mo>−</mo><msub><mi>y</mi><mi>j</mi></msub><mo stretchy="false">)</mo><mspace width="1em"/><mtext>impacts per mm², </mtext></math></div>
+  <p>with Ṅ the shots per second and V the traverse speed. After n rasters with lines every δ, and a = π·E[r²] the area of one dent, each point has received</p>
+  <div class="eq"><math display="block"><mi>λ</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mi>n</mi><mspace width="0.15em"/><mi>a</mi><mspace width="0.15em"/><mfrac><mover><mi>N</mi><mo>˙</mo></mover><mi>V</mi></mfrac><munder><mo>∑</mo><mi>j</mi></munder><mi>g</mi><mo stretchy="false">(</mo><mi>y</mi><mo>−</mo><mi>j</mi><mi>δ</mi><mo stretchy="false">)</mo><mspace width="1em"/><mtext>and</mtext><mspace width="1em"/><mi>τ</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mn>100</mn><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msup><mi>e</mi><mrow><mo>−</mo><mi>λ</mi><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo></mrow></msup><mo stretchy="false">)</mo></math></div>
+</section>
+
+<section class="panel" aria-label="Overlap of neighbouring lines">
+  <h2>What the profile does to neighbouring lines</h2>
+  <p>The sum Σ g(y − jδ) gives how many shots each point receives from all the lines of a raster. It is shown here relative to its mean 1/δ: a flat line at 1 means an even treatment, waves mean stripes.</p>
+  <div class="ctrl">
+    <label for="dl">Step between lines δ <input type="range" id="dl" min="0.5" max="60" step="0.5" value="15"><output id="dlo">15 mm</output></label>
+  </div>
+  <div class="legend">
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--gauss)" stroke-width="3"/></svg>Gaussian jet</span>
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--unif)" stroke-width="3" stroke-dasharray="6 4"/></svg>uniform jet</span>
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 4"/></svg>line positions</span>
+  </div>
+  <svg class="chart" id="sum" viewBox="0 0 640 280" role="img" aria-label="Relative impact density across several neighbouring lines"></svg>
+  <div class="reads">
+    <div class="read"><div class="k">Overlap ratio ΔX/δ</div><div class="v" id="rov">–</div></div>
+    <div class="read"><div class="k">Stripes, Gaussian (max − min)/mean</div><div class="v" id="rsg">–</div></div>
+    <div class="read"><div class="k">Stripes, uniform (max − min)/mean</div><div class="v" id="rsu">–</div></div>
+  </div>
+  <ul>
+    <li><b>Gaussian jet:</b> the lines blend smoothly. Stripes stay below 3 % as long as δ ≤ 2σⱼ = ΔX/2, and grow quickly beyond.</li>
+    <li><b>Uniform jet:</b> even only when ΔX/δ is a whole number (δ = ΔX, ΔX/2, ΔX/3…). Otherwise sharp steps; for δ &gt; ΔX, untreated gaps.</li>
+  </ul>
+  <p class="note">σⱼ = ΔX/4 is a modelling convention, not a measurement. The real profile of a nozzle can be measured by scanning the coverage or the Almen intensity across a single stationary sweep.</p>
+</section>
+
+<footer>
+  <span><b>Dr Régis Kubler</b>, Arts et Métiers Institute of Technology. Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026. Code: MIT licence · Documentation: CC BY 4.0.</span>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const nf=(x,d)=>x.toLocaleString("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d});
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NS="http://www.w3.org/2000/svg";
+function el(n,a,p){ const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); p.appendChild(e); return e; }
+function niceStep(v){ const p=Math.pow(10,Math.floor(Math.log10(v))); for(const m of [1,2,2.5,5,10]) if(m*p>=v) return m*p; return 10*p; }
+const gG=(y,dX)=>{ const s=dX/4; return Math.exp(-y*y/(2*s*s))/(Math.sqrt(2*Math.PI)*s); };
+const gU=(y,dX)=>Math.abs(y)<=dX/2?1/dX:0;
+function drawProfile(dX){
+  const svg=document.getElementById("prof"); svg.innerHTML="";
+  const L=62,R=16,T=18,B=40,W=640,H=330, xr=dX, ymax=niceStep(1.75/dX/5)*5;
+  const x=v=>L+(W-L-R)*(v+xr)/(2*xr), y=v=>T+(H-T-B)*(1-v/ymax);
+  for(let k=0;k<=5;k++){ const v=ymax*k/5; el("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:css("--line")},svg);
+    el("text",{x:L-6,y:y(v)+4,"text-anchor":"end"},svg).textContent=nf(v,v<0.1?3:2); }
+  el("text",{x:14,y:(T+H-B)/2,"text-anchor":"middle",transform:`rotate(-90 14 ${(T+H-B)/2})`},svg).textContent="g(y) (1/mm)";
+  const st=niceStep(xr/4); for(let v=-Math.floor(xr/st)*st;v<=xr+1e-9;v+=st) el("text",{x:x(v),y:H-B+16,"text-anchor":"middle"},svg).textContent=nf(v,st<1?1:0);
+  el("text",{x:(L+W-R)/2,y:H-4,"text-anchor":"middle"},svg).textContent="y, distance across the line from the jet axis (mm)";
+  // shaded area under Gaussian inside ±ΔX/2
+  let d="M"+x(-dX/2)+","+y(0); const N=300;
+  for(let i=0;i<=N;i++){ const v=-dX/2+dX*i/N; d+="L"+x(v).toFixed(1)+","+y(gG(v,dX)).toFixed(1); } d+="L"+x(dX/2)+","+y(0)+"Z";
+  el("path",{d,fill:css("--shade"),stroke:"none"},svg);
+  // ΔX and σ markers
+  for(const [v,lab] of [[-dX/2,"−ΔX/2"],[dX/2,"+ΔX/2"]]){ el("line",{x1:x(v),x2:x(v),y1:y(0),y2:y(ymax),stroke:css("--muted"),"stroke-dasharray":"3 4"},svg); el("text",{x:x(v),y:T-4,"text-anchor":"middle"},svg).textContent=lab; }
+  const s=dX/4, gs=gG(s,dX);
+  for(const v of [-s,s]){ el("line",{x1:x(v),x2:x(v),y1:y(0),y2:y(gs),stroke:css("--gauss"),"stroke-dasharray":"2 3","stroke-opacity":.7},svg); }
+  el("line",{x1:x(-s),x2:x(s),y1:y(gs),y2:y(gs),stroke:css("--gauss"),"stroke-width":1},svg);
+  el("text",{x:x(0),y:y(gs)-6,"text-anchor":"middle"},svg).textContent="±σⱼ";
+  // ΔX dimension
+  const yd=y(ymax*0.06); el("line",{x1:x(-dX/2),x2:x(dX/2),y1:yd,y2:yd,stroke:css("--ink"),"stroke-width":1.2},svg);
+  el("text",{x:x(0),y:yd-5,"text-anchor":"middle",style:"fill:"+css("--ink")},svg).textContent="ΔX = "+nf(dX,1)+" mm";
+  // curves
+  let dg="",du=""; for(let i=0;i<=600;i++){ const v=-xr+2*xr*i/600; dg+=(i?"L":"M")+x(v).toFixed(1)+","+y(gG(v,dX)).toFixed(1); }
+  du="M"+x(-xr)+","+y(0)+"L"+x(-dX/2)+","+y(0)+"L"+x(-dX/2)+","+y(1/dX)+"L"+x(dX/2)+","+y(1/dX)+"L"+x(dX/2)+","+y(0)+"L"+x(xr)+","+y(0);
+  el("path",{d:du,fill:"none",stroke:css("--unif"),"stroke-width":2.4,"stroke-dasharray":"7 5"},svg);
+  el("path",{d:dg,fill:"none",stroke:css("--gauss"),"stroke-width":2.6},svg);
+  const g0=gG(0,dX); el("circle",{cx:x(0),cy:y(g0),r:4,fill:css("--gauss")},svg);
+  el("text",{x:x(0)+8,y:y(g0)+4,"text-anchor":"start",style:"fill:"+css("--gauss")},svg).textContent="peak 1.596/ΔX = "+nf(g0,3);
+  const ge=gG(dX/2,dX); el("circle",{cx:x(dX/2),cy:y(ge),r:3.5,fill:css("--gauss")},svg);
+  el("text",{x:x(dX/2)+6,y:y(ge)-6,"text-anchor":"start",style:"fill:"+css("--gauss")},svg).textContent="13.5 % of peak";
+  document.getElementById("rs").textContent=nf(s,2)+" mm";
+  document.getElementById("rg0").textContent=nf(g0,4)+" /mm";
+  document.getElementById("ru").textContent=nf(1/dX,4)+" /mm";
+  document.getElementById("re").textContent=nf(ge,4)+" /mm";
+}
+function drawSum(dX,dl){
+  const svg=document.getElementById("sum"); svg.innerHTML="";
+  const L=62,R=16,T=14,B=40,W=640,H=280, span=Math.max(4*dl,2*dX), x0=-span/2;
+  const N=800, sg=[], su=[]; let gmn=1e9,gmx=0,umn=1e9,umx=0;
+  for(let i=0;i<=N;i++){ const yy=x0+span*i/N; let a=0,b=0; const j0=Math.floor((yy-2*dX)/dl), j1=Math.ceil((yy+2*dX)/dl);
+    for(let j=j0;j<=j1;j++){ a+=gG(yy-j*dl,dX); b+=gU(yy-j*dl,dX); } a*=dl; b*=dl; sg.push([yy,a]); su.push([yy,b]); }
+  // stripe stats over one period
+  for(let i=0;i<=400;i++){ const yy=dl*i/400; let a=0,b=0; for(let j=-Math.ceil(2*dX/dl)-1;j<=Math.ceil(2*dX/dl)+1;j++){ a+=gG(yy-j*dl,dX); b+=gU(yy-j*dl,dX); } a*=dl; b*=dl; gmn=Math.min(gmn,a); gmx=Math.max(gmx,a); umn=Math.min(umn,b); umx=Math.max(umx,b); }
+  const ymax=Math.max(2,Math.ceil(Math.max(gmx,umx)*2+.2)/2);
+  const x=v=>L+(W-L-R)*(v-x0)/span, y=v=>T+(H-T-B)*(1-v/ymax);
+  for(let v=0;v<=ymax+1e-9;v+=0.5){ el("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:css("--line"),"stroke-width":v===1?1.6:1},svg); el("text",{x:L-6,y:y(v)+4,"text-anchor":"end"},svg).textContent=nf(v,1); }
+  el("text",{x:14,y:(T+H-B)/2,"text-anchor":"middle",transform:`rotate(-90 14 ${(T+H-B)/2})`},svg).textContent="relative density";
+  for(let j=Math.ceil(x0/dl);j*dl<=x0+span;j++) el("line",{x1:x(j*dl),x2:x(j*dl),y1:T,y2:H-B,stroke:css("--muted"),"stroke-dasharray":"2 4","stroke-opacity":.7},svg);
+  const st=niceStep(span/8); for(let v=Math.ceil(x0/st)*st;v<=x0+span+1e-9;v+=st) el("text",{x:x(v),y:H-B+16,"text-anchor":"middle"},svg).textContent=nf(v,st<1?1:0);
+  el("text",{x:(L+W-R)/2,y:H-4,"text-anchor":"middle"},svg).textContent="y across the raster (mm); lines every δ = "+nf(dl,1)+" mm";
+  const path=(arr,colr,dash)=>{ let d=""; arr.forEach(([a,b],i)=>{ d+=(i?"L":"M")+x(a).toFixed(1)+","+y(b).toFixed(1); }); el("path",{d,fill:"none",stroke:colr,"stroke-width":2.4,"stroke-dasharray":dash||""},svg); };
+  path(su,css("--unif"),"7 5"); path(sg,css("--gauss"));
+  document.getElementById("rov").textContent=nf(dX/dl,2);
+  document.getElementById("rsg").textContent=nf(100*(gmx-gmn),1)+" %";
+  document.getElementById("rsu").textContent=nf(100*(umx-umn),1)+" %";
+}
+const dx=document.getElementById("dx"), dl=document.getElementById("dl");
+function render(){ const a=+dx.value, b=+dl.value; document.getElementById("dxo").textContent=nf(a,1)+" mm"; document.getElementById("dlo").textContent=nf(b,1)+" mm"; drawProfile(a); drawSum(a,b); }
+dx.addEventListener("input",render); dl.addEventListener("input",render);
+if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",render);
+render();
+})();
+</script>
+<script data-goatcounter="https://rkubler.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
