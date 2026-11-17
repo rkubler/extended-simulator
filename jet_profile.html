@@ -129,6 +129,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
     <li><b>Gaussian jet:</b> the lines blend smoothly. Stripes stay below 3 % as long as δ ≤ 2σⱼ = ΔX/2, and grow quickly beyond.</li>
     <li><b>Uniform jet:</b> even only when ΔX/δ is a whole number (δ = ΔX, ΔX/2, ΔX/3…). Otherwise sharp steps; for δ &gt; ΔX, untreated gaps.</li>
   </ul>
+  <p><b>Why the two curves can be in opposition.</b> The Gaussian jet always has its maxima on the lines, where its dense centre passes. The uniform jet counts how many bands of width ΔX overlap at each point: on a line it receives 2⌊m/2⌋ + 1 bands and halfway between two lines 2⌊(m+1)/2⌋ bands, with m = ΔX/δ. For 1 &lt; m &lt; 2 (for example δ = 15 mm with ΔX = 20 mm), a point on a line is reached by one band but a point between two lines by two: the uniform maxima fall <em>between</em> the lines, opposite to the Gaussian ones. For 2 &lt; m &lt; 3 (for example δ = 8 mm) the maxima are on the lines for both, then they alternate again for 3 &lt; m &lt; 4, and so on. This is a real effect of the top-hat shape, not a display error.</p>
   <p class="note">σⱼ = ΔX/4 is a modelling convention, not a measurement. The real profile of a nozzle can be measured by scanning the coverage or the Almen intensity across a single stationary sweep.</p>
 </section>
 

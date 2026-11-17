@@ -19,6 +19,7 @@ line to line in **stripes**.
 - Mean, minimum and maximum coverage in the central zone, stripe amplitude
 - Coverage versus number of rasters: simulation, stripe-corrected model and average model
 - One-raster coverage versus step δ
+- Crossed rasters at 0° and 90°: λ(x,y) = λ₀(y) + λ₉₀(x), mean coverage 1 − mean(e^(−λ₀))·mean(e^(−λ₉₀))
 - Rasters and time needed to reach 98 % coverage
 
 An information page on the jet profile (uniform and Gaussian, equations,
@@ -27,8 +28,9 @@ profile setting: [jet_profile.html](https://rkubler.github.io/extended-simulator
 
 Parameters (sliders or typed values): media flow rate, density, shot size
 (log-normal spread), dent radius, jet size ΔX, jet profile (uniform or
-Gaussian), traverse speed V, step δ, number of rasters, half-step offset
-between rasters, part length and width.
+Gaussian), traverse speed V, step δ, number of rasters at 0° (horizontal lines)
+and at 90° (vertical lines), order of the rasters (alternate or 0° first), half-step
+offset between rasters, part length and width.
 
 ## Model
 - Shots per second: Ṅ = ṁ / m̄ₚ, with m̄ₚ = ρ·π/6·E[D³]
@@ -65,3 +67,8 @@ Code: MIT, see [LICENSE](LICENSE). Documentation: CC BY 4.0.
 
 ## Cite as
 Kubler, R. (2026). *Extended Shot Peening Coverage Simulator*. Arts et Métiers Institute of Technology. Zenodo. DOI: [to add]
+
+## Versions
+
+- 1.1 (17 November 2026): rasters at 0° and 90°, choice of raster order, horizontal or vertical cross-section.
+- 1.0 (17 November 2026): first release.
