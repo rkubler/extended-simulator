@@ -22,13 +22,13 @@ line to line in **stripes**.
 - Crossed rasters at 0° and 90°: λ(x,y) = λ₀(y) + λ₉₀(x), mean coverage 1 − mean(e^(−λ₀))·mean(e^(−λ₉₀))
 - Rasters and time needed to reach 98 % coverage
 
-An information page on the jet profile (uniform and Gaussian, equations,
+An information page on the jet profile (uniform, Gaussian and flattened Gaussian, equations,
 overlap of neighbouring lines) opens from the ⓘ button next to the jet
 profile setting: [jet_profile.html](https://rkubler.github.io/extended-simulator/jet_profile.html).
 
 Parameters (sliders or typed values): media flow rate, density, shot size
-(log-normal spread), dent radius, jet size ΔX, jet profile (uniform or
-Gaussian), traverse speed V, step δ, number of rasters at 0° (horizontal lines)
+(log-normal spread), dent radius, jet size ΔX, jet profile (uniform,
+Gaussian or flattened Gaussian with exponent p), traverse speed V, step δ, number of rasters at 0° (horizontal lines)
 and at 90° (vertical lines), order of the rasters (alternate or 0° first), half-step
 offset between rasters, part length and width.
 
@@ -42,6 +42,11 @@ offset between rasters, part length and width.
 - Uniform jet: τ = 1 − (1−f)·e^(−K·m₀·n) − f·e^(−K·(m₀+1)·n), m₀ = ⌊ΔX/δ⌋, f = ΔX/δ − m₀
 - Gaussian jet (σⱼ = ΔX/4): stripe amplitude ≈ 4·e^(−2π²(σⱼ/δ)²), negligible for δ ≤ ΔX/2
 - Flattened Gaussian g ∝ e^(−|u/w|^p), w = (ΔX/2)/2^(1/p): p = 2 is the Gaussian, large p tends to the uniform jet; stripes computed numerically
+
+
+## Coverage above 100 % (NF L 06-832)
+
+The base time is the peening time needed to dent 98 % of the surface. Full coverage (100 %) is 1.25 × the base time (an option sets it to the base time instead), and 200 % or 300 % means 2 or 3 times the time of full coverage. On an even random treatment, full coverage corresponds to λ = 1.25·ln 50 = 4.89 impacts per point on average (99.25 % dented). Coverage itself is always the dented area divided by the total area. The readout "Coverage (NF L 06-832)" combines both: it is the dented area up to the base time t_b (98 %), goes from 98 % to 100 % between t_b and 1.25·t_b, and is 100·t / (1.25·t_b) above (200 % = twice the time of full coverage).
 
 ## Use
 Open the live link above, or download `index.html` and open it in any web
@@ -71,5 +76,11 @@ Kubler, R. (2026). *Extended Shot Peening Coverage Simulator*. Arts et Métiers 
 
 ## Versions
 
+- 1.7 (18 November 2026): readout "Min / max coverage (NF L 06-832)", which can exceed 100 %.
+- 1.6 (18 November 2026): local coverage (NF L 06-832) of each point, above 100 %, in the hover readout and as a map mode.
+- 1.5 (18 November 2026): new readout "Coverage (NF L 06-832)", which can exceed 100 %.
+- 1.4 (18 November 2026): coverage-level readouts and map removed; coverage is the dented area divided by the total area.
+- 1.3 (18 November 2026): coverage above 100 % (NF L 06-832): specified coverage, base time, 1.25 factor option.
+- 1.2 (18 November 2026): flattened Gaussian jet profile with exponent p, on the simulator and the jet profile page.
 - 1.1 (17 November 2026): rasters at 0° and 90°, choice of raster order, horizontal or vertical cross-section.
 - 1.0 (17 November 2026): first release.
