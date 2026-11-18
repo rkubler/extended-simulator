@@ -41,6 +41,7 @@ offset between rasters, part length and width.
 - Local coverage: τ = 1 − e^(−λ); stripes always lower the mean coverage
 - Uniform jet: τ = 1 − (1−f)·e^(−K·m₀·n) − f·e^(−K·(m₀+1)·n), m₀ = ⌊ΔX/δ⌋, f = ΔX/δ − m₀
 - Gaussian jet (σⱼ = ΔX/4): stripe amplitude ≈ 4·e^(−2π²(σⱼ/δ)²), negligible for δ ≤ ΔX/2
+- Flattened Gaussian g ∝ e^(−|u/w|^p), w = (ΔX/2)/2^(1/p): p = 2 is the Gaussian, large p tends to the uniform jet; stripes computed numerically
 
 ## Use
 Open the live link above, or download `index.html` and open it in any web
