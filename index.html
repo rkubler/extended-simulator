@@ -96,7 +96,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
 <div class="wrap">
 <header class="hero">
 <div class="htext">
-  <p class="byline"><b>Dr Régis Kubler</b>, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026 · <b>Version 1.1 (17 November 2026)</b></p>
+  <p class="byline"><b>Dr Régis Kubler</b>, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026 · <b>Version 1.2 (18 November 2026)</b></p>
   <h1>Extended Shot Peening Coverage Simulator</h1>
   <p>The nozzle sweeps the part along parallel lines, back and forth, with a step δ between lines: horizontal lines for a 0° raster, vertical lines for a 90° raster. A jet of width ΔX overlaps neighbouring lines by ΔX/δ, so the number of impacts can vary from line to line in stripes; crossing the rasters at 0° and 90° turns the stripes into a finer checkerboard. The page builds the map of impacts per point across the part, then the coverage <span class="formula">τ = 100·(1 − e<sup>−λ</sup>)</span>, and compares it with the average model <span class="formula">K<sub>δ</sub> = K·ΔX/δ</span>.</p>
 </div>
@@ -201,7 +201,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
       <li><span class="t">Average K of a raster with step δ</span><span class="val" id="c4"></span><span class="f">K<sub>δ</sub> = a·Ṅ / (V·δ) = K·ΔX/δ (each point is crossed by ΔX/δ lines on average)</span></li>
       <li><span class="t">Local impacts per point</span><span class="val" id="c5"></span><span class="f">λ(x,y) = a·(Ṅ/V)·[Σ<sub>0° lines</sub> g(y − y<sub>j</sub>) + Σ<sub>90° lines</sub> g(x − x<sub>j</sub>)], g = jet profile across the line (∫g = 1); uniform: 1/ΔX; Gaussian: σ<sub>j</sub> = ΔX/4</span></li>
       <li><span class="t">Local and mean coverage</span><span class="val" id="c6"></span><span class="f">τ(x,y) = 1 − e^(−λ(x,y)); the mean of τ is always ≤ 1 − e^(−mean λ): stripes cost coverage</span></li>
-      <li><span class="t">Stripe amplitude, one raster</span><span class="val" id="c7"></span><span class="f">(λ max − λ min) / λ mean; Gaussian jet: ≈ 4·e^(−2π²(σ<sub>j</sub>/δ)²), below 3 % for δ ≤ 2σ<sub>j</sub> = ΔX/2</span></li>
+      <li><span class="t">Stripe amplitude, one raster</span><span class="val" id="c7"></span><span class="f" id="c7f">(λ max − λ min) / λ mean; Gaussian jet: ≈ 4·e^(−2π²(σ<sub>j</sub>/δ)²), below 3 % for δ ≤ 2σ<sub>j</sub> = ΔX/2</span></li>
       <li><span class="t">Crossed rasters at 0° and 90°</span><span class="val" id="c8"></span><span class="f">The 0° lines make stripes along y, the 90° lines along x, so λ(x,y) = λ₀(y) + λ₉₀(x). The mean coverage factorises: τ̄ = 1 − mean(e^(−λ₀))·mean(e^(−λ₉₀)). Without offset and for the same total number of rasters, crossing never gives less coverage than parallel passes: the weak stripes of one direction fall across the strong stripes of the other instead of on top of themselves. The average model only sees the total n = n₀ + n₉₀.</span></li>
     </ol>
   </section>
@@ -218,7 +218,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
 (function(){
 "use strict";
 /* ---------- parameters ---------- */
-const DEF={mdot:1.5, rho:2.2, D:150, sig:0, r:10, dX:20, prof:"gauss", V:300, delta:15, n0:3, n90:3, order:"alt", off:"none", W:100, H:100};
+const DEF={mdot:1.5, rho:2.2, D:150, sig:0, r:10, dX:20, prof:"gauss", pexp:4, V:300, delta:15, n0:3, n90:3, order:"alt", off:"none", W:100, H:100};
 const SPEC=[
  {k:"mdot", lab:"Media flow rate ṁ", u:"kg/min", min:0.1, max:6, step:0.1, d:1},
  {k:"rho",  lab:"Media density ρ", u:"g/cm³", min:1, max:8, step:0.1, d:1},
@@ -226,7 +226,8 @@ const SPEC=[
  {k:"sig",  lab:"Size spread σ (log-normal)", u:"–", min:0, max:0.6, step:0.02, d:2},
  {k:"r",    lab:"Dent radius r (for D = D₅₀)", u:"µm", min:2, max:100, step:1, d:0},
  {k:"dX",   lab:"Jet size ΔX", u:"mm", min:2, max:60, step:0.5, d:1},
- {k:"prof", lab:"Jet profile across the line", info:"jet_profile.html", sel:[["gauss","Gaussian (σⱼ = ΔX/4)"],["uniform","Uniform (top-hat over ΔX)"]]},
+ {k:"prof", lab:"Jet profile across the line", info:"jet_profile.html", sel:[["gauss","Gaussian (σⱼ = ΔX/4)"],["flat","Flattened Gaussian (exponent p)"],["uniform","Uniform (top-hat over ΔX)"]]},
+ {k:"pexp", lab:"Flatness exponent p (flattened Gaussian)", u:"–", min:2, max:20, step:0.5, d:1, only:"flat"},
  {k:"V",    lab:"Traverse speed V", u:"mm/s", min:10, max:2000, step:10, d:0},
  {k:"delta",lab:"Step between lines δ", u:"mm", min:0.5, max:80, step:0.5, d:1},
  {k:"n0",   lab:"Rasters at 0° (horizontal lines)", u:"–", min:0, max:30, step:1, d:0},
@@ -246,9 +247,28 @@ const total=()=>P.n0+P.n90;
 
 /* ---------- jet profile (1D, normalised), and its cumulative ---------- */
 function erf(x){ const t=1/(1+0.3275911*Math.abs(x)), y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x); return x>=0?y:-y; }
-function prof(u){ if(P.prof==="uniform") return Math.abs(u)<=P.dX/2?1/P.dX:0; const s=P.dX/4; return Math.exp(-u*u/(2*s*s))/(Math.sqrt(2*Math.PI)*s); }
-function cdf(u){ if(P.prof==="uniform") return Math.max(0,Math.min(1,u/P.dX+0.5)); const s=P.dX/4; return 0.5*(1+erf(u/(Math.SQRT2*s))); }
-function halfReach(){ return P.prof==="uniform"? P.dX/2 : P.dX; } // profile is negligible beyond (Gaussian: 4σj)
+/* flattened Gaussian (super-Gaussian): g(u) = e^(−|u/w|^p) / (2w·Γ(1+1/p)), with w = (ΔX/2)/2^(1/p) so that the
+   intensity at ±ΔX/2 is e^(−2) = 13.5 % of the peak, as for the Gaussian. p = 2 is the Gaussian (σj = ΔX/4); p → ∞ tends to the uniform jet. */
+function gammaln(x){ const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y=x, t=x+5.5; t-=(x+0.5)*Math.log(t); let ser=1.000000000190015; for(const ci of c) ser+=ci/++y; return -t+Math.log(2.5066282746310005*ser/x); }
+function gammaP(a,x){ if(x<=0) return 0; const gl=gammaln(a);
+  if(x<a+1){ let ap=a, sum=1/a, del=sum; for(let n=0;n<500;n++){ ap++; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*1e-14) break; } return Math.min(1,sum*Math.exp(-x+a*Math.log(x)-gl)); }
+  return 1-gammaQcf(a,x,gl); }
+function gammaQ(a,x){ if(x<=0) return 1; const gl=gammaln(a); return x<a+1? 1-gammaP(a,x) : gammaQcf(a,x,gl); }
+function gammaQcf(a,x,gl){ const FP=1e-300; let b=x+1-a, c=1/FP, d=1/b, h=d;
+  for(let i=1;i<500;i++){ const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<FP) d=FP; c=b+an/c; if(Math.abs(c)<FP) c=FP; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<1e-14) break; }
+  return Math.exp(-x+a*Math.log(x)-gl)*h; }
+let J={};
+function jetConst(){ const p=P.pexp, w=(P.dX/2)/Math.pow(2,1/p);
+  J={p, w, N:2*w*Math.exp(gammaln(1+1/p)), H:w*Math.exp(gammaln(2/p)-gammaln(1/p))/2}; }
+function prof(u){ if(P.prof==="uniform") return Math.abs(u)<=P.dX/2?1/P.dX:0;
+  if(P.prof==="flat") return Math.exp(-Math.pow(Math.abs(u)/J.w,J.p))/J.N;
+  const s=P.dX/4; return Math.exp(-u*u/(2*s*s))/(Math.sqrt(2*Math.PI)*s); }
+function cdf(u){ if(P.prof==="uniform") return Math.max(0,Math.min(1,u/P.dX+0.5));
+  if(P.prof==="flat"){ const q=0.5*gammaP(1/J.p,Math.pow(Math.abs(u)/J.w,J.p)); return u>=0?0.5+q:0.5-q; }
+  const s=P.dX/4; return 0.5*(1+erf(u/(Math.SQRT2*s))); }
+// profile negligible beyond: uniform ΔX/2; Gaussian 4σj = ΔX; flattened Gaussian where |u/w|^p = 8 (same level as the Gaussian)
+function halfReach(){ return P.prof==="uniform"? P.dX/2 : P.prof==="flat"? J.w*Math.pow(8,1/J.p) : P.dX; }
 
 /* ---------- order of the rasters ---------- */
 function makePlan(){ const p=[]; let a=P.n0,b=P.n90;
@@ -263,6 +283,7 @@ function counts(k,plan){ let c0=0,c9=0; const T=plan.length; const full=Math.flo
 let M;
 function derive(){
   if(total()<1) P.n0=1;
+  jetConst();
   const sg=P.sig, Dm=P.D*1e-6, ED3=Math.pow(Dm,3)*Math.exp(-4.5*sg*sg), ED2=Dm*Dm*Math.exp(-4*sg*sg);
   const mp=P.rho*1000*Math.PI/6*ED3, Nd=(P.mdot/60)/mp, c=P.r/P.D, a=Math.PI*c*c*ED2*1e6; // a in mm²
   const K1=a*Nd/(P.V*P.dX), Kd=a*Nd/(P.V*P.delta);
@@ -324,6 +345,7 @@ function deposit(L,s0,s1){
 // integral of the cdf: I(u) = ∫_{-∞}^{u} cdf(v) dv
 function icdf(u){
   if(P.prof==="uniform"){ const h=P.dX/2; if(u<=-h) return 0; if(u>=h) return u; const t=u+h; return t*t/(2*P.dX); }
+  if(P.prof==="flat"){ const a=Math.abs(u); return u*cdf(u) + J.H*gammaQ(2/J.p,Math.pow(a/J.w,J.p)); } // I(u) = u·G(u) + ∫_|u|^∞ t·g(t) dt
   const s=P.dX/4, z=u/s; return s*( z*0.5*(1+erf(z/Math.SQRT2)) + Math.exp(-z*z/2)/Math.sqrt(2*Math.PI) );
 }
 
@@ -457,7 +479,7 @@ function drawCd(){
   el("path",{d:d1,fill:"none",stroke:css("--theory"),"stroke-width":2.4},svg);
   const cur=covCounts(1,0).cov;
   el("circle",{cx:x(P.delta),cy:y(cur),r:5.5,fill:css("--accent"),stroke:css("--surface"),"stroke-width":2},svg);
-  document.getElementById("cdnote").textContent=(P.prof==="gauss"?"Gaussian jet: stripes appear when δ exceeds about ΔX/2 = 2σⱼ; ":"Uniform jet: stripes appear whenever ΔX/δ is not a whole number, and gaps when δ > ΔX; ")+"a smaller step raises the coverage of one raster, but each raster takes longer (area per second = V·δ).";
+  document.getElementById("cdnote").textContent=(P.prof==="gauss"?"Gaussian jet: stripes appear when δ exceeds about ΔX/2 = 2σⱼ; ":P.prof==="flat"?"Flattened Gaussian (p = "+nf(P.pexp,1)+"): between the Gaussian and the uniform jet; the stripes depend on both p and δ (see the stripe amplitude in the calculation chain); ":"Uniform jet: stripes appear whenever ΔX/δ is not a whole number, and gaps when δ > ΔX; ")+"a smaller step raises the coverage of one raster, but each raster takes longer (area per second = V·δ).";
 }
 // rasters needed for 98 % (the plan is repeated if needed), interpolated between whole rasters
 function nRaster98(corrected){ if(!corrected) return Math.log(50)/M.Kd;
@@ -487,11 +509,15 @@ function fillTexts(){
   document.getElementById("c6").textContent=nf(ct.cov,1)+" %";
   const amp=one.lmean>0?(one.lmax-one.lmin)/one.lmean:0;
   document.getElementById("c7").textContent=nf(100*amp,1)+" %";
+  document.getElementById("c7f").innerHTML="(λ max − λ min) / λ mean; "+(P.prof==="gauss"?"Gaussian jet: ≈ 4·e^(−2π²(σ<sub>j</sub>/δ)²), below 3 % for δ ≤ 2σ<sub>j</sub> = ΔX/2"
+    :P.prof==="flat"?"flattened Gaussian: computed numerically (no closed form); it depends on both p and δ, and some steps cancel the stripes almost completely"
+    :"uniform jet: zero when ΔX/δ is a whole number");
+  updOnly();
   document.getElementById("c8").innerHTML=P.n0>0&&P.n90>0? nf(ct.cov,1)+" % vs "+nf(same0.cov,1)+" % all at 0°" : (P.n90>0?"90° only":"0° only");
   document.getElementById("rPlan").textContent=M.plan.map(a=>a+"°").join(" · ");
   const w=document.getElementById("warn");
   w.textContent = (P.prof==="uniform"&&P.delta>P.dX) ? (P.n0>0&&P.n90>0?"Step larger than the jet: untreated squares remain where the gaps of the 0° and 90° rasters cross, whatever the number of rasters.":"Step larger than the jet: untreated strips remain between the lines whatever the number of rasters.")
-    : (amp>0.15 ? "Visible stripes: λ of one raster varies by "+nf(100*amp,0)+" % across the lines. Reduce the step δ"+(P.prof==="gauss"?" below about ΔX/2":" to ΔX divided by a whole number")+", use the half-step offset"+(P.n0>0&&P.n90>0?"":", or cross the rasters at 0° and 90°")+"." : "");
+    : (amp>0.15 ? "Visible stripes: λ of one raster varies by "+nf(100*amp,0)+" % across the lines. Reduce the step δ"+(P.prof==="gauss"?" below about ΔX/2":P.prof==="flat"?"":" to ΔX divided by a whole number")+", use the half-step offset"+(P.n0>0&&P.n90>0?"":", or cross the rasters at 0° and 90°")+"." : "");
   lamScale=Math.max(1e-9,Math.max(ct.lmax,ct.lmean)*1.05);
   const tk=document.getElementById("ticks"); tk.innerHTML=""; const cov=document.getElementById("view").value==="cov";
   for(let i=0;i<=5;i++){ const sp=document.createElement("span"); sp.textContent=cov?(i*20)+" %":nf(lamScale*i/5,lamScale<5?1:0); tk.appendChild(sp); }
@@ -561,6 +587,8 @@ mc.addEventListener("click",e=>{ const p=mapPos(e); if(p.x<0||p.x>P.W||p.y<0||p.
 
 /* ---------- parameter inputs ---------- */
 const box=document.getElementById("params");
+function updOnly(){ for(const s of SPEC){ if(!s.only) continue; const off=P.prof!==s.only, row=document.getElementById("in-"+s.k).closest(".param");
+  row.style.opacity=off?.45:1; row.querySelectorAll("input").forEach(e=>e.disabled=off); row.title=off?"Used only with the flattened Gaussian profile":""; } }
 function sync(s){ if(s.sel){ document.getElementById("in-"+s.k).value=P[s.k]; return; } document.getElementById("rg-"+s.k).value=P[s.k]; document.getElementById("in-"+s.k).value=P[s.k]; }
 for(const s of SPEC){
   const d=document.createElement("div"); d.className="param";
