@@ -4,8 +4,6 @@
 
 Online: https://rkubler.github.io/extended-simulator/docs/extended_simulator_guide.pdf
 
-## LaTeX sources
 
-`extended_simulator_guide.tex` uses the shared preamble `common.tex` and the shared sections `nfcov.tex` and `tilt.tex`; the screenshots are in `img/`. To compile, run `pdflatex extended_simulator_guide.tex` three times in this folder.
 
 Dr Régis Kubler, Arts et Métiers Institute of Technology. Developed with the assistance of Claude Opus 5.5 (Anthropic). Documentation licence: CC BY 4.0.
