@@ -1,4 +1,4 @@
-# Extended Shot Peening Coverage Simulator
+# Flat Shot Peening Coverage Simulator
 
 **Dr Régis Kubler**, Arts et Métiers Institute of Technology
 *Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026*
