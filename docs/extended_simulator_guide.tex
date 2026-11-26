@@ -6,7 +6,7 @@
 \large User and theory guide: coverage of a flat part swept by raster paths}
 \author{Dr Régis Kubler\\ Arts et Métiers Institute of Technology\\[4pt]
 \small Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026}
-\date{Guide for simulator version 1.7 (18 November 2026)\\ \url{https://rkubler.github.io/extended-simulator/}}
+\date{Guide for simulator version 2.3 (22 November 2026)\\ \url{https://rkubler.github.io/extended-simulator/}}
 
 \begin{document}
 \maketitle
@@ -57,9 +57,11 @@ Then set the step to \SI{10}{mm}: the stripes almost vanish (\SI{2.8}{\percent})
 \item[\ui{Map shows}] coverage $\tau$ (\%), impacts per point $\lambda$, or local coverage (NF~L~06-832), which can exceed 100\,\% (Section~\ref{sec:above}).
 \end{description}
 
+\paragraph{Export.} Under every figure, \ui{Export PNG} saves the figure exactly as it is shown at that instant (also during the animation) as a PNG image: map of the part, side and front views of the nozzles, cross-section and the two charts. \ui{CSV} saves the data behind it as a CSV file (comma separated, UTF-8, readable by Excel, Python or Matlab): the map as shown (coverage, $\lambda$ or NF coverage at every point of the grid), the cross-section, the coverage versus the number of rasters (both models and the simulated points) and the one-raster coverage versus the step. The file names contain the date and time.
+
 \paragraph{Panels.}
 \begin{enumerate}[nosep]
-\item \textbf{Part seen from above}: the map, its colour scale (rainbow from untreated grey to red) and the hover readout. Clicking the map moves the cross-section line.
+\item \textbf{Part seen from above}: the map, its colour scale (rainbow from untreated grey to red) and the hover readout. Clicking the map moves the cross-section line. Below it, the \textbf{side view of the nozzles along the current line}: a section in the plane of the path and the normal, with the part, its edges and the overtravel, the nozzle (or the two nozzles) tilted by $\theta_1$ and $\theta_2$ with the normal and the angles, the jets, their footprints $\dX/\cos\theta_k$ along the path and the direction of travel. The stand-off distance is not to scale.
 \item \textbf{Cross-section across the lines}: $\tau$ (orange, left axis) and $\lambda$ (blue, right axis) along a vertical cut (across the 0° lines) or a horizontal cut (across the 90° lines), with the positions of the lines as dotted marks. Below it, the main readouts.
 \item \textbf{Coverage versus number of rasters}: both models, the simulated points, the markers for 98\,\%, 100\,\% and the specified coverage, and the time readouts.
 \item \textbf{One-raster coverage versus step $\delta$}: the effect of the step for a single raster.
@@ -90,7 +92,7 @@ where $a$ is the mean dent area, $\dot N$ the number of shots per second, $V$ th
 \bar\tau=100\,\Bigl(1-\bigl\langle e^{-\lambda_{0}(y)}\bigr\rangle\,\bigl\langle e^{-\lambda_{90}(x)}\bigr\rangle\Bigr)\;\le\;\bar\tau_{\text{avg}},
 \label{eq:corr}
 \end{equation}
-where $\lambda_0$ and $\lambda_{90}$ are the impacts brought by the 0° and 90° rasters and $\langle\cdot\rangle$ is the mean over one period of the stripes.
+where $\lambda_0$ and $\lambda_{90}$ are the impacts brought by the 0° and 90° rasters and $\langle\cdot\rangle$ is the mean over the central zone of the part (the zone used for the statistics, at a distance $\dX$ from the edges).
 
 \smallskip
 \textbf{Stripes of a Gaussian jet} ($\sigma_j=\dX/4$): the relative amplitude of $\lambda$ for one raster is
@@ -211,7 +213,7 @@ so the average model is an upper bound of the true mean coverage: it is optimist
 
 \subsection{Stripe-corrected model}
 
-The stripe-corrected model takes the mean of the local coverage, $\bar\tau=\langle 1-e^{-\lambda}\rangle$, over one period of the stripes. The page evaluates it numerically on 240 points over $2\delta$ (two steps, to include the half-step offset).
+The stripe-corrected model takes the mean of the local coverage, $\bar\tau=\langle 1-e^{-\lambda}\rangle$, over the central zone of the part, with the lines actually travelled. The page evaluates it numerically on 600 points across the zone, separately for the 0° lines (across $y$) and the 90° lines (across $x$). The chart ``one-raster coverage versus step'' uses instead the mean over one period $2\delta$ (two steps, to include the half-step offset), which describes an infinitely large part.
 
 \paragraph{Uniform jet: closed form.} With a top-hat jet a point is crossed by either $m_0=\lfloor \dX/\delta\rfloor$ or $m_0+1$ lines per raster. The stripes crossed $m_0+1$ times occupy a fraction $f=\dX/\delta-m_0$ of the surface. Each kind of stripe has its own coverage, and the mean is
 \begin{equation}
@@ -271,7 +273,7 @@ The left side is the uncovered fraction of parallel passes, the right side that 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.74\linewidth]{img/cov_n.png}
-\caption{Mean coverage versus the number of rasters for $\delta=\SI{25}{mm}$ (Gaussian jet, default parameters). The average model is an upper bound. The stripe-corrected mean lies between the coverage of the weakest stripe and that of the strongest stripe. Alternating 0° and 90° rasters reaches \SI{98}{\percent} in 27.4 rasters instead of 43.0 for parallel passes; the average model predicts 14.5.}
+\caption{Mean coverage versus the number of rasters for $\delta=\SI{25}{mm}$ (Gaussian jet, default parameters). The average model is an upper bound. The stripe-corrected mean lies between the coverage of the weakest stripe and that of the strongest stripe. For an infinitely large part (mean over whole periods, as plotted), alternating 0° and 90° rasters reaches \SI{98}{\percent} in 27.4 rasters instead of 43.0 for parallel passes; the average model predicts 14.5. On the $100\times\SI{100}{mm}$ part of the page: 23.4 and 39.9 rasters.}
 \label{fig:cn}
 \end{figure}
 
@@ -331,8 +333,8 @@ Gaussian & 15 & 3 + 3, 0° first & 92.9 \% & 92.9 \% & 93.2 \%\\
 Uniform & 15 & 2 + 2, alternate & 81.8 \% & 81.8 \% & 83.4 \%\\
 Gaussian & 15 & 4 + 2, half-step offset & 93.2 \% & 93.2 \% & 93.2 \%\\
 \midrule
-Gaussian & 25 & 6 at 0° & 72.7 \% & 68.6 \% & 80.1 \%\\
-Gaussian & 25 & 3 + 3, alternate & 78.4 \% & 74.4 \% & 80.1 \%\\
+Gaussian & 25 & 6 at 0° & 72.7 \% & 72.7 \% & 80.1 \%\\
+Gaussian & 25 & 3 + 3, alternate & 78.4 \% & 78.4 \% & 80.1 \%\\
 \midrule
 Flattened, $p=2$ & 15 & 6 at 0° & 92.6 \% & 92.6 \% & 93.2 \%\\
 Flattened, $p=4$ & 15 & 6 at 0° & 93.2 \% & 93.2 \% & 93.2 \%\\
@@ -341,14 +343,14 @@ Flattened, $p=4$ & 15 & 3 + 3, half-step offset & 93.2 \% & 93.2 \% & 93.2 \%\\
 Flattened, $p=20$ & 10 & 1 at 0° & 48.9 \% & 48.9 \% & 49.0 \%\\
 Flattened, $p=20$ & 15 & 1 at 0° & 35.6 \% & 35.6 \% & 36.2 \%\\
 Flat., $p=3$, $\dX=\SI{30}{mm}$ & 12 & 2 + 2, part 150 × 120 & 89.4 \% & 89.4 \% & 89.4 \%\\
-Flattened, $p=4$ & 25 & 3 + 3, alternate & 78.1 \% & 74.3 \% & 80.1 \%\\
+Flattened, $p=4$ & 25 & 3 + 3, alternate & 78.1 \% & 78.1 \% & 80.1 \%\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 For the default case (Gaussian, $\delta=\SI{15}{mm}$, 6 rasters at 0°) the simulated stripes are \SI{44.5}{\percent} against \SI{44.6}{\percent} predicted, with a local coverage between \SI{87.7}{\percent} and \SI{96.3}{\percent}; \SI{98}{\percent} is reached in 9.2 rasters (8.7 with the average model).
 
-The lines with $\delta=\SI{25}{mm}$ differ by about 4 points. This is not an error of the deposition but a sampling effect of the statistics: for $\delta=\SI{25}{mm}$ the period of the stripes is \SI{25}{mm} and the central zone (\SI{60}{mm}) covers 2.4 periods, not a whole number, so it contains more strong stripes than weak ones. On a $150\times\SI{150}{mm}$ part (4.4 periods) the gap falls to 2 points. The model value is the exact mean over a whole number of periods.
+The simulated map and the stripe-corrected model agree in every case, and both agree with an independent Python computation (mean, minimum and maximum coverage, stripe amplitude and $n_{98}$), including the tilted nozzles ($\theta$, $\psi$) and two nozzles. Since version 2.2 the model is averaged over the central zone of the part rather than over one period of the stripes. The two differ when the zone does not contain a whole number of periods: for $\delta=\SI{25}{mm}$ the zone (\SI{60}{mm}) covers 2.4 periods and contains more strong stripes than weak ones, so the part shown reaches 78.4\,\% after the 6 rasters and 98\,\% after 23.4 rasters, whereas an infinitely large part would reach 74.4\,\% and need 27.4 rasters. The model now describes the part on the screen, so the base time, the times for full and specified coverage and the coverage (NF~L~06-832) are consistent with the map.
 
 
 \section{Every parameter}\label{sec:params}
@@ -356,7 +358,7 @@ The lines with $\delta=\SI{25}{mm}$ differ by about 4 points. This is not an err
 \begin{longtable}{@{}p{3.6cm}p{1.4cm}p{2.0cm}p{1.6cm}p{4.9cm}@{}}
 \toprule
 \textbf{Parameter} & \textbf{Unit} & \textbf{Range} & \textbf{Default} & \textbf{Effect}\\ \midrule\endhead
-Media flow rate $\dot m$ & kg/min & 0.1 -- 6 & 1.5 & $\lambda\propto\dot m$.\\
+Media flow rate $\dot m$ (per nozzle) & kg/min & 0.1 -- 6 & 1.5 & $\lambda\propto\dot m$.\\
 Media density $\rho$ & g/cm³ & 1 -- 8 & 2.2 & $\lambda\propto1/\rho$ at fixed flow rate.\\
 Mass median diameter $D_{50}$ & µm & 30 -- 1000 & 150 & Number of shots per second $\propto1/D_{50}^3$.\\
 Size spread $\sigma$ & -- & 0 -- 0.6 & 0 & Log-normal spread of the shot sizes.\\
@@ -365,6 +367,11 @@ Jet size $\dX$ & mm & 2 -- 60 & 20 & Width of the jet; sets the overlap $\dX/\de
 Jet profile & -- & 3 choices & Gaussian & Uniform, Gaussian ($\sigma_j=\dX/4$) or flattened Gaussian; the \ui{i} button opens the page ``Jet Profile Explained''.\\
 Flatness exponent $p$ & -- & 2 -- 20 & 4 & Only for the flattened Gaussian; 2 = Gaussian, large = uniform.\\
 Traverse speed $V$ & mm/s & 10 -- 2000 & 300 & $\lambda\propto1/V$; also sets the time of a raster.\\
+Number of nozzles & -- & 1 or 2 & 1 & Same plane, aimed at the same point; $\dot m$ per nozzle.\\
+Angle $\theta_1$ of nozzle 1 & ° & 0 -- 60 & 0 & 0 = normal; tilt in the plane (path, normal). $\lambda\propto f(\theta)$; stripes unchanged; longer overtravel.\\
+Angle $\theta_2$ of nozzle 2 & ° & $-60$ -- 0 & 0 & Tilted the other way; only with 2 nozzles.\\
+Angle $\psi$ of the nozzle plane & ° & 0 -- 60 & 0 & Tilt across the path; jet $\dX/\cos\psi$ wide across the lines: smoother stripes.\\
+Dent area at angle $\theta$ & -- & 2 choices & $\cos\theta$ & $f(\theta)=\cos\theta$ or $\cos^2\theta$ (Section~\ref{sec:tilt}).\\
 Step between lines $\delta$ & mm & 0.5 -- 80 & 15 & $\lambda\propto1/\delta$; stripes when $\delta$ is large compared with $\dX$.\\
 Rasters at 0° & -- & 0 -- 30 & 3 & Rasters of horizontal lines (along $x$).\\
 Rasters at 90° & -- & 0 -- 30 & 3 & Rasters of vertical lines (along $y$).\\
@@ -419,7 +426,15 @@ NF~L~06-832 defines the \textbf{base time} $t_b$ as the time needed to reach 98\
 
 \noindent With the defaults, 12 rasters give a mean dented area of 99.5\,\% (98.5 to 99.9\,\%) and a coverage (NF~L~06-832) of 107\,\% (98.6 to 135\,\% from the weakest to the strongest point).
 
-\textbf{Stripes lengthen the base time.} On a striped part the weak stripes are the last to be dented, so the base time is longer than on an even one: with the defaults $n_{98}=8.9$ rasters instead of 8.7 for the average model, and 27.4 instead of 8.7 with $\delta=\SI{25}{mm}$. The fraction of a raster is exact on a flat part: it stands for a raster with the same path at a proportionally lower speed.
+\textbf{Stripes lengthen the base time.} On a striped part the weak stripes are the last to be dented, so the base time is longer than on an even one: with the defaults $n_{98}=8.9$ rasters instead of 8.7 for the average model, and 23.4 instead of 14.5 with $\delta=\SI{25}{mm}$. The fraction of a raster is exact on a flat part: it stands for a raster with the same path at a proportionally lower speed.
+
+\input{tilt.tex}
+
+\noindent On the flat part, the profile of the jet across the lines, the overlap $\dX/\delta$ and the stripes do not change: only $\lambda$ is multiplied by $f(\theta)$. The footprint drawn on the map is $\dX/\cos\theta$ long along the current line, and the overtravel beyond the part ends grows in the same ratio, which makes each raster slightly longer. With $\theta=45°$ and $f=\cos\theta$: mean coverage 84.8\,\% (77.3 to 90.2\,\%) instead of 92.9\,\% (87.7 to 96.3\,\%), and 12.6 rasters for 98\,\% instead of 8.9 (× 1.41). With $f=\cos^2\theta$: 73.7\,\% and 17.9 rasters.
+
+\noindent With two nozzles at $\pm45°$: mean coverage 97.6\,\% (94.8 to 99.0\,\%) after the 6 rasters, 6.3 rasters for 98\,\% instead of 8.9. The stripes keep the same relative amplitude, since both jets have the same profile across the lines.
+
+\noindent A front view across the current line, under the side view, shows $\psi$, the width of the jet across the path and the neighbouring lines of the raster. With the defaults and $\psi=30°$: mean coverage 90.3\,\% (87.5 to 92.4\,\%), stripe amplitude 21.3\,\% instead of 44.5\,\%, 10.1 rasters for 98\,\% instead of 8.9; at $\psi=60°$ the stripes vanish (0.1\,\%) but the dents are half as large (74.0\,\%, 17.4 rasters).
 
 \section{Things to try}
 
@@ -431,7 +446,7 @@ Change from the defaults & mean $\tau$ & min / max & stripes & $n_{98}$ & Commen
 none (3 + 3, $\delta=15$) & 92.9 & 87.7 / 96.3 & 44.5 & 8.9 & defaults\\
 6 at 0°, 0 at 90° & 92.6 & 87.7 / 96.3 & 44.5 & 9.2 & parallel passes\\
 $\delta=\SI{10}{mm}$ & 98.2 & 98.1 / 98.3 & 2.8 & 5.8 & no stripes\\
-$\delta=\SI{25}{mm}$ & 78.4 & 24.7 / 96.0 & 162 & 27.4 & strong stripes\\
+$\delta=\SI{25}{mm}$ & 78.4 & 24.7 / 96.0 & 162 & 23.4 & strong stripes\\
 uniform jet & 91.8 & 86.7 / 98.2 & 75.0 & 9.8 & sharp steps\\
 flattened jet ($p=4$) & 93.2 & 92.9 / 94.0 & 6.1 & 8.7 & stripes cancel\\
 half-step offset & 93.2 & 91.7 / 94.5 & 14.8 & 8.7 & finer stripes\\ \bottomrule

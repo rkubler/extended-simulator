@@ -78,6 +78,12 @@ Kubler, R. (2026). *Extended Shot Peening Coverage Simulator*. Arts et Métiers 
 
 ## Versions
 
+- 2.3 (22 November 2026): export of every figure as a PNG image (as shown at that instant) and of the data of every chart, map and table as a CSV file.
+- 2.2 (22 November 2026): the stripe-corrected model is averaged over the central zone of the part (the same surface as the map), so the base time and all the times are consistent with the simulated coverage; checked against an independent computation.
+- 2.1 (22 November 2026): angle ψ tilting the nozzle plane across the path (cos γ = cos θ·cos ψ, jet ΔX/cos ψ wide across the lines, smoother stripes); front view of the nozzles across the line.
+- 2.0 (22 November 2026): side view of the nozzles along the current line, with their angles to the normal, the jets, the footprints and the direction of travel.
+- 1.9 (22 November 2026): option for 2 nozzles in the same plane, aimed at the same point, at angles θ₁ ≥ 0 and θ₂ ≤ 0 (flow rate per nozzle); K = K₀·[f(θ₁) + f(θ₂)].
+- 1.8 (22 November 2026): nozzle angle θ from the normal (0 to 60°, tilted in the plane of the path and the normal) and dent-area law a = a₀·cos θ or a₀·cos²θ; the footprint is ΔX/cos θ long along the path.
 - 1.7 (18 November 2026): readout "Min / max coverage (NF L 06-832)", which can exceed 100 %.
 - 1.6 (18 November 2026): local coverage (NF L 06-832) of each point, above 100 %, in the hover readout and as a map mode.
 - 1.5 (18 November 2026): new readout "Coverage (NF L 06-832)", which can exceed 100 %.

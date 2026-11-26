@@ -43,7 +43,7 @@ button{font:600 14px var(--f-body);border:1px solid var(--line);background:var(-
 button:hover{border-color:var(--muted)}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff;min-width:7.5em}
-select{font:500 14px var(--f-body);background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+select{max-width:100%;font:500 14px var(--f-body);background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .bar label{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
 .bar .sep{flex:1}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
@@ -96,7 +96,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
 <div class="wrap">
 <header class="hero">
 <div class="htext">
-  <p class="byline"><b>Dr Régis Kubler</b>, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026 · <b>Version 1.7 (18 November 2026)</b> · <a href="https://rkubler.github.io/extended-simulator/docs/extended_simulator_guide.pdf" target="_blank" rel="noopener">User guide (PDF)</a></p>
+  <p class="byline"><b>Dr Régis Kubler</b>, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), November 2026 · <b>Version 2.3 (22 November 2026)</b> · <a href="https://rkubler.github.io/extended-simulator/docs/extended_simulator_guide.pdf" target="_blank" rel="noopener">User guide (PDF)</a></p>
   <h1>Extended Shot Peening Coverage Simulator</h1>
   <p>The nozzle sweeps the part along parallel lines, back and forth, with a step δ between lines: horizontal lines for a 0° raster, vertical lines for a 90° raster. A jet of width ΔX overlaps neighbouring lines by ΔX/δ, so the number of impacts can vary from line to line in stripes; crossing the rasters at 0° and 90° turns the stripes into a finer checkerboard. The page builds the map of impacts per point across the part, then the coverage <span class="formula">τ = 100·(1 − e<sup>−λ</sup>)</span>, and compares it with the average model <span class="formula">K<sub>δ</sub> = K·ΔX/δ</span>.</p>
 </div>
@@ -113,7 +113,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
   <label for="speed">Animation speed
     <select id="speed"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option><option value="10">×10</option></select></label>
   <label for="view">Map shows
-    <select id="view"><option value="cov" selected>coverage τ (%)</option><option value="lam">impacts per point λ</option><option value="nf">coverage NF L 06-832 (%), can exceed 100 %</option></select></label>
+    <select id="view"><option value="cov" selected>coverage τ (%)</option><option value="lam">impacts per point λ</option><option value="nf">coverage NF L 06-832 (%, above 100 %)</option></select></label>
 </div>
 
 <div class="grid">
@@ -127,6 +127,11 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
     </div>
     <div id="hover">Hover over the map to read the local values. Click to move the cross-section line.</div>
     <div class="phase" id="phase" aria-live="polite"></div>
+    <h2 style="margin-top:14px">Side view of the nozzles along the current line</h2>
+    <canvas id="side" aria-label="Side view of the nozzle or nozzles, their jets and their angles θ to the normal of the surface"></canvas>
+    <h2 style="margin-top:14px">Front view across the current line (angle ψ)</h2>
+    <canvas id="front" aria-label="Front view of the nozzles across the path, with the angle ψ and the neighbouring lines"></canvas>
+    <p class="note" id="sideNote">Side view: section through the current line, in the plane of the path and the normal (angles θ). Front view: section across the line, in the plane of the normal and the cross direction (angle ψ); the ticks are the neighbouring lines of the raster. The nozzles move with the jet and keep their orientation relative to the path; the stand-off distance is not to scale.</p>
   </section>
 
   <section class="panel" aria-label="Cross-section and results">
@@ -202,7 +207,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
     <ol class="chain">
       <li><span class="t">E[D³]: mean of the cube of the shot diameter</span><span class="val" id="c0"></span><span class="f">E[·] is the mean (expected value) over all the shots, each shot counting once. The mass of a shot is proportional to D³, so the mean shot mass needs the mean of D³, not the cube of the mean diameter: large shots weigh much more, so E[D³] &gt; (mean D)³. Identical shots (σ = 0): E[D³] = D³. Log-normal sizes with mass median D₅₀: E[D³] = D₅₀³·e^(−4.5σ²). From a sieve analysis (mass fractions wᵢ of classes Dᵢ): E[D³] = Σwᵢ / Σ(wᵢ/Dᵢ³). Likewise E[D²] (mean of D²) sets the mean dent area.</span></li>
       <li><span class="t">Shots per second</span><span class="val" id="c1"></span><span class="f">Ṅ = ṁ / m̄ₚ, with the mean shot mass m̄ₚ = ρ·π/6·E[D³]</span></li>
-      <li><span class="t">Area of one dent</span><span class="val" id="c2"></span><span class="f">a = π·E[r²] = π·c²·E[D²], c = r₅₀/D₅₀</span></li>
+      <li><span class="t">Area of one dent</span><span class="val" id="c2"></span><span class="f">a = π·E[r²] = π·c²·E[D²]·f(γ), c = r₅₀/D₅₀; angle of incidence γ with cos γ = cos θ·cos ψ: f = cos γ or cos²γ <span id="cTh"></span>. The footprint is ΔX·√(1 + tan²θ/cos²ψ) long along the path and ΔX/cos ψ wide across: θ does not change the stripes, ψ widens the jet across the lines and smooths them.</span></li>
       <li><span class="t">K of a single line (step δ = ΔX)</span><span class="val" id="c3"></span><span class="f">K = a·Ṅ / (V·ΔX): the original spreadsheet model</span></li>
       <li><span class="t">Average K of a raster with step δ</span><span class="val" id="c4"></span><span class="f">K<sub>δ</sub> = a·Ṅ / (V·δ) = K·ΔX/δ (each point is crossed by ΔX/δ lines on average)</span></li>
       <li><span class="t">Local impacts per point</span><span class="val" id="c5"></span><span class="f">λ(x,y) = a·(Ṅ/V)·[Σ<sub>0° lines</sub> g(y − y<sub>j</sub>) + Σ<sub>90° lines</sub> g(x − x<sub>j</sub>)], g = jet profile across the line (∫g = 1); uniform: 1/ΔX; Gaussian: σ<sub>j</sub> = ΔX/4</span></li>
@@ -225,17 +230,60 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
 (function(){
 "use strict";
 /* ---------- parameters ---------- */
-const DEF={mdot:1.5, rho:2.2, D:150, sig:0, r:10, dX:20, prof:"gauss", pexp:4, V:300, delta:15, n0:3, n90:3, order:"alt", off:"none", W:100, H:100, cspec:100, ffac:"125"};
+/* ---------- export of the figures: PNG (canvas or SVG, as shown at this instant) and CSV (data of the charts, maps and tables) ---------- */
+const EXP={data:{}, grids:{}, prefix:"sim",
+  set(id,cols,rows){ this.data[id]={cols,rows}; },             // chart data, refreshed by the drawing functions
+  grid(id,fn){ this.grids[id]=fn; },                             // map data, computed on demand: fn() -> {cols, rows}
+  stamp(){ const d=new Date(), z=n=>String(n).padStart(2,"0"); return d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+"_"+z(d.getHours())+z(d.getMinutes())+z(d.getSeconds()); },
+  save(blob,name){ const a=document.createElement("a"), u=URL.createObjectURL(blob); a.href=u; a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(u); a.remove(); },1500); },
+  bg(){ const s=getComputedStyle(document.documentElement); return (s.getPropertyValue("--surface")||s.getPropertyValue("--bg")||"#ffffff").trim()||"#ffffff"; },
+  csvText(cols,rows){ const q=v=>{ if(v===null||v===undefined||(typeof v==="number"&&!isFinite(v))) return ""; const s=typeof v==="number"?String(+v.toPrecision(8)):String(v); return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    return [cols.map(q).join(","), ...rows.map(r=>r.map(q).join(","))].join("\n")+"\n"; },
+  csv(id){ const d=this.grids[id]?this.grids[id]():this.data[id]; if(!d){ alert("No data yet for this figure."); return; }
+    this.save(new Blob(["﻿"+this.csvText(d.cols,d.rows)],{type:"text/csv;charset=utf-8"}), this.prefix+"_"+id+"_"+this.stamp()+".csv"); },
+  pngCanvas(cv,id){ const c=document.createElement("canvas"); c.width=cv.width; c.height=cv.height; const x=c.getContext("2d"); x.fillStyle=this.bg(); x.fillRect(0,0,c.width,c.height); x.drawImage(cv,0,0);
+    c.toBlob(b=>this.save(b,this.prefix+"_"+id+"_"+this.stamp()+".png"),"image/png"); },
+  pngSvg(svg,id){ // copy the computed styles into the clone so that the image looks like the page
+    const cl=svg.cloneNode(true), src=[svg,...svg.querySelectorAll("*")], dst=[cl,...cl.querySelectorAll("*")];
+    const props=["fill","fill-opacity","stroke","stroke-width","stroke-dasharray","stroke-opacity","opacity","font-family","font-size","font-weight","text-anchor","dominant-baseline"];
+    src.forEach((e,i)=>{ const cs=getComputedStyle(e); dst[i].setAttribute("style",props.map(p=>p+":"+cs.getPropertyValue(p)).join(";")+";"+(dst[i].getAttribute("style")||"")); });
+    const vb=svg.viewBox&&svg.viewBox.baseVal&&svg.viewBox.baseVal.width?svg.viewBox.baseVal:{width:svg.clientWidth,height:svg.clientHeight}, k=2, W=Math.round(vb.width*k), H=Math.round(vb.height*k);
+    cl.setAttribute("width",W); cl.setAttribute("height",H); cl.setAttribute("xmlns","http://www.w3.org/2000/svg");
+    const img=new Image(), u=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)],{type:"image/svg+xml"}));
+    img.onload=()=>{ const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d"); x.fillStyle=this.bg(); x.fillRect(0,0,W,H); x.drawImage(img,0,0,W,H); URL.revokeObjectURL(u);
+      c.toBlob(b=>this.save(b,this.prefix+"_"+id+"_"+this.stamp()+".png"),"image/png"); };
+    img.onerror=()=>{ URL.revokeObjectURL(u); alert("This figure could not be converted to PNG in this browser."); };
+    img.src=u; },
+  tableData(t){ const rows=[...t.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>{ const c=td.cloneNode(true); c.querySelectorAll("br").forEach(b=>b.replaceWith(" ")); return c.textContent.replace(/\s+/g," ").trim(); })); return {cols:rows[0]||[], rows:rows.slice(1)}; },
+  // add an "Export" bar under every figure listed; csv: true when the figure has data
+  init(prefix,list){ this.prefix=prefix;
+    for(const it of list){ const el=document.getElementById(it.id); if(!el) continue;
+      const bar=document.createElement("div"); bar.className="expbar";
+      const mk=(lab,fn,tip)=>{ const b=document.createElement("button"); b.type="button"; b.textContent=lab; b.title=tip; b.addEventListener("click",fn); bar.appendChild(b); };
+      bar.appendChild(Object.assign(document.createElement("span"),{textContent:"Export"}));
+      if(el.tagName==="TABLE"){ mk("CSV",()=>{ this.data[it.id]=this.tableData(el); this.csv(it.id); },"Download the table as a CSV file"); }
+      else { mk("PNG",()=>el.tagName==="CANVAS"?this.pngCanvas(el,it.id):this.pngSvg(el,it.id),"Download the figure as it is now, as a PNG image");
+        if(it.csv) mk("CSV",()=>this.csv(it.id),it.tip||"Download the data of the figure as a CSV file"); }
+      el.insertAdjacentElement("afterend",bar); }
+    const st=document.createElement("style"); st.textContent=".expbar{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:4px 0 8px;font:500 11px var(--f-mono,monospace);color:var(--muted)}.expbar button{font:600 11px var(--f-mono,monospace);padding:2px 8px;border-radius:5px;border:1px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer}.expbar button:hover{border-color:var(--accent);color:var(--accent)}";
+    document.head.appendChild(st); }
+};
+const DEF={mdot:1.5, rho:2.2, D:150, sig:0, r:10, dX:20, prof:"gauss", pexp:4, V:300, nn:"1", th:0, th2:0, psi:0, dlaw:"cos", delta:15, n0:3, n90:3, order:"alt", off:"none", W:100, H:100, cspec:100, ffac:"125"};
 const SPEC=[
- {k:"mdot", lab:"Media flow rate ṁ", u:"kg/min", min:0.1, max:6, step:0.1, d:1},
+ {k:"mdot", lab:"Media flow rate ṁ (per nozzle)", u:"kg/min", min:0.1, max:6, step:0.1, d:1},
  {k:"rho",  lab:"Media density ρ", u:"g/cm³", min:1, max:8, step:0.1, d:1},
  {k:"D",    lab:"Mass median diameter D₅₀", u:"µm", min:30, max:1000, step:10, d:0},
  {k:"sig",  lab:"Size spread σ (log-normal)", u:"–", min:0, max:0.6, step:0.02, d:2},
- {k:"r",    lab:"Dent radius r (for D = D₅₀)", u:"µm", min:2, max:100, step:1, d:0},
+ {k:"r",    lab:"Dent radius r (for D = D₅₀, normal impact)", u:"µm", min:2, max:100, step:1, d:0},
  {k:"dX",   lab:"Jet size ΔX", u:"mm", min:2, max:60, step:0.5, d:1},
  {k:"prof", lab:"Jet profile across the line", info:"jet_profile.html", sel:[["gauss","Gaussian (σⱼ = ΔX/4)"],["flat","Flattened Gaussian (exponent p)"],["uniform","Uniform (top-hat over ΔX)"]]},
  {k:"pexp", lab:"Flatness exponent p (flattened Gaussian)", u:"–", min:2, max:20, step:0.5, d:1, only:"flat"},
  {k:"V",    lab:"Traverse speed V", u:"mm/s", min:10, max:2000, step:10, d:0},
+ {k:"nn",   lab:"Number of nozzles (same plane, aimed at the same point)", sel:[["1","1 nozzle (angle θ₁)"],["2","2 nozzles (angles θ₁ ≥ 0 and θ₂ ≤ 0)"]]},
+ {k:"th",   lab:"Angle θ₁ of nozzle 1 from the normal (in the plane of the path)", u:"°", min:0, max:60, step:1, d:0},
+ {k:"th2",  lab:"Angle θ₂ of nozzle 2 (tilted the other way, 2 nozzles only)", u:"°", min:-60, max:0, step:1, d:0, only:()=>P.nn==="2", onlyMsg:"Used only with 2 nozzles"},
+ {k:"psi",  lab:"Angle ψ: tilt of the nozzle plane across the path", u:"°", min:0, max:60, step:1, d:0},
+ {k:"dlaw", lab:"Dent area at angle θ", sel:[["cos","a = a₀·cos θ (dent radius ∝ √vₙ)"],["cos2","a = a₀·cos²θ (normal kinetic energy)"]]},
  {k:"delta",lab:"Step between lines δ", u:"mm", min:0.5, max:80, step:0.5, d:1},
  {k:"n0",   lab:"Rasters at 0° (horizontal lines)", u:"–", min:0, max:30, step:1, d:0},
  {k:"n90",  lab:"Rasters at 90° (vertical lines)", u:"–", min:0, max:30, step:1, d:0},
@@ -268,16 +316,17 @@ function gammaQcf(a,x,gl){ const FP=1e-300; let b=x+1-a, c=1/FP, d=1/b, h=d;
   for(let i=1;i<500;i++){ const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<FP) d=FP; c=b+an/c; if(Math.abs(c)<FP) c=FP; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<1e-14) break; }
   return Math.exp(-x+a*Math.log(x)-gl)*h; }
 let J={};
-function jetConst(){ const p=P.pexp, w=(P.dX/2)/Math.pow(2,1/p);
+let DY=20; // jet width across the path (ΔX/cos ψ)
+function jetConst(){ const p=P.pexp, w=(DY/2)/Math.pow(2,1/p);
   J={p, w, N:2*w*Math.exp(gammaln(1+1/p)), H:w*Math.exp(gammaln(2/p)-gammaln(1/p))/2}; }
-function prof(u){ if(P.prof==="uniform") return Math.abs(u)<=P.dX/2?1/P.dX:0;
+function prof(u){ if(P.prof==="uniform") return Math.abs(u)<=DY/2?1/DY:0;
   if(P.prof==="flat") return Math.exp(-Math.pow(Math.abs(u)/J.w,J.p))/J.N;
-  const s=P.dX/4; return Math.exp(-u*u/(2*s*s))/(Math.sqrt(2*Math.PI)*s); }
-function cdf(u){ if(P.prof==="uniform") return Math.max(0,Math.min(1,u/P.dX+0.5));
+  const s=DY/4; return Math.exp(-u*u/(2*s*s))/(Math.sqrt(2*Math.PI)*s); }
+function cdf(u){ if(P.prof==="uniform") return Math.max(0,Math.min(1,u/DY+0.5));
   if(P.prof==="flat"){ const q=0.5*gammaP(1/J.p,Math.pow(Math.abs(u)/J.w,J.p)); return u>=0?0.5+q:0.5-q; }
-  const s=P.dX/4; return 0.5*(1+erf(u/(Math.SQRT2*s))); }
+  const s=DY/4; return 0.5*(1+erf(u/(Math.SQRT2*s))); }
 // profile negligible beyond: uniform ΔX/2; Gaussian 4σj = ΔX; flattened Gaussian where |u/w|^p = 8 (same level as the Gaussian)
-function halfReach(){ return P.prof==="uniform"? P.dX/2 : P.prof==="flat"? J.w*Math.pow(8,1/J.p) : P.dX; }
+function halfReach(){ return P.prof==="uniform"? DY/2 : P.prof==="flat"? J.w*Math.pow(8,1/J.p) : DY; }
 
 /* ---------- order of the rasters ---------- */
 function makePlan(){ const p=[]; let a=P.n0,b=P.n90;
@@ -292,12 +341,18 @@ function counts(k,plan){ let c0=0,c9=0; const T=plan.length; const full=Math.flo
 let M;
 function derive(){
   if(total()<1) P.n0=1;
-  jetConst();
+  DY=P.dX/Math.cos(P.psi*Math.PI/180); jetConst();
   const sg=P.sig, Dm=P.D*1e-6, ED3=Math.pow(Dm,3)*Math.exp(-4.5*sg*sg), ED2=Dm*Dm*Math.exp(-4*sg*sg);
-  const mp=P.rho*1000*Math.PI/6*ED3, Nd=(P.mdot/60)/mp, c=P.r/P.D, a=Math.PI*c*c*ED2*1e6; // a in mm²
-  const K1=a*Nd/(P.V*P.dX), Kd=a*Nd/(P.V*P.delta);
-  M={mp,Nd,a,K1,Kd,ED3,ED2,D32:ED3/ED2,plan:makePlan()};
-  M.T=rasterArrays(P.delta);
+  // one or two nozzles (same flow rate each) aimed at the same point, tilted by θ₁ ≥ 0 and θ₂ ≤ 0: dent area × f(θₖ), footprint 1/cos θₖ longer
+  // ψ tilts the plane of the nozzles about the path: nozzle axis (sin θ, cos θ sin ψ, cos θ cos ψ), incidence cos γ = cos θ·cos ψ;
+  // footprint across the path ΔX/cos ψ (DY), along the path ΔX·√(1 + tan²θ / cos²ψ)
+  const cps=Math.cos(P.psi*Math.PI/180); DY=P.dX/cps;
+  const nn=P.nn==="2"?2:1, ff=x=>{ const c=Math.cos(x*Math.PI/180)*cps; return P.dlaw==="cos2"?c*c:c; }, angs=nn===2?[P.th,P.th2]:[P.th];
+  const fk=angs.map(ff), ek=angs.map(x=>{ const tt=Math.tan(x*Math.PI/180); return Math.sqrt(1+tt*tt/(cps*cps)); }), fth=fk.reduce((s,x)=>s+x,0)/nn;
+  const mp=P.rho*1000*Math.PI/6*ED3, Nd=nn*(P.mdot/60)/mp, c=P.r/P.D, a0=Math.PI*c*c*ED2*1e6, a=a0*fth; // Nd: all nozzles; a: mean dent area in mm²
+  const K1=a*Nd/(P.V*DY), Kd=a*Nd/(P.V*P.delta);
+  M={mp,Nd,a,a0,fth,nn,fk,ek,e:Math.max(...ek),K1,Kd,ED3,ED2,D32:ED3/ED2,plan:makePlan()};
+  M.T=zoneArrays();
 }
 /* one raster of parallel lines at positions j·δ + o: impacts per point at a distance u across the lines */
 function lam1(u,delta,o){ const A=M.a*M.Nd/P.V, R=halfReach()+delta; let s=0;
@@ -306,12 +361,19 @@ function lam1(u,delta,o){ const A=M.a*M.Nd/P.V, R=halfReach()+delta; let s=0;
 /* λ of one raster without offset (A) and with the δ/2 offset (B), sampled over one period 2δ */
 function rasterArrays(delta){ const N=240, A=new Float64Array(N), B=new Float64Array(N);
   for(let i=0;i<N;i++){ const u=(i+.5)/N*2*delta; A[i]=lam1(u,delta,0); B[i]=P.off==="half"?lam1(u,delta,delta/2):A[i]; }
-  return {N,A,B}; }
+  return {N,A0:A,B0:B,A9:A,B9:B}; }
+/* the same over the central zone of this part (the lines actually travelled, edges excluded by the jet width),
+   so that the model, the base time and the simulated map describe the same surface */
+function zoneArrays(){ const N=600, A=M.a*M.Nd/P.V, o2=P.off==="half"?P.delta/2:0;
+  const one=(span,o)=>{ const n=Math.floor((span-o)/P.delta+1e-9)+1, lines=[]; for(let j=0;j<n;j++) lines.push(o+j*P.delta);
+    let u0=DY, u1=span-DY; if(u1<=u0){ u0=0; u1=span; } const arr=new Float64Array(N);
+    for(let i=0;i<N;i++){ const u=u0+(i+.5)/N*(u1-u0); let s=0; for(const c of lines) s+=prof(u-c); arr[i]=A*s; } return arr; };
+  return {N, A0:one(P.H,0), B0:one(P.H,o2), A9:one(P.W,0), B9:one(P.W,o2)}; }
 /* stripe-corrected theory for n0 rasters at 0° and n90 at 90°:
    λ(x,y) = λ0(y) + λ90(x), so mean τ = 1 − mean(e^−λ0) · mean(e^−λ90) */
 function covCounts(n0,n9,T){ T=T||M.T; const N=T.N; let e0=0,e9=0,m0=0,m9=0,lo0=1e9,hi0=0,lo9=1e9,hi9=0;
   const a0=Math.ceil(n0/2),b0=Math.floor(n0/2),a9=Math.ceil(n9/2),b9=Math.floor(n9/2);
-  for(let i=0;i<N;i++){ const l0=a0*T.A[i]+b0*T.B[i], l9=a9*T.A[i]+b9*T.B[i];
+  for(let i=0;i<N;i++){ const l0=a0*T.A0[i]+b0*T.B0[i], l9=a9*T.A9[i]+b9*T.B9[i];
     e0+=Math.exp(-l0); e9+=Math.exp(-l9); m0+=l0; m9+=l9; lo0=Math.min(lo0,l0); hi0=Math.max(hi0,l0); lo9=Math.min(lo9,l9); hi9=Math.max(hi9,l9); }
   return {cov:100*(1-(e0/N)*(e9/N)), lmean:(m0+m9)/N, lmin:lo0+lo9, lmax:hi0+hi9}; }
 function covK(k){ const c=counts(k,M.plan); return covCounts(c[0],c[1]); }
@@ -322,7 +384,7 @@ const S={line:0,s:0,playing:false,stopAt:null,lam:null,rasterPts:[],xsecX:null,x
 function build(){
   const h=Math.max(P.W,P.H)/220, NX=Math.max(20,Math.round(P.W/h)), NY=Math.max(20,Math.round(P.H/h));
   const hx=P.W/NX, hy=P.H/NY;
-  const overH=halfReach()+0.02*P.W, overV=halfReach()+0.02*P.H;   // overtravel beyond the part ends (turnarounds outside)
+  const overH=halfReach()*M.e+0.02*P.W, overV=halfReach()*M.e+0.02*P.H;   // overtravel beyond the part ends (turnarounds outside); a tilted jet is ΔX/cos θ long along the path
   const lines=[], cnt={0:0,90:0}, nL={0:0,90:0};
   M.plan.forEach((ang,k)=>{ const kk=cnt[ang]++, o=(P.off==="half"&&kk%2===1)?P.delta/2:0;
     const span=ang===0?P.H:P.W, len=ang===0?P.W:P.H, ov=ang===0?overH:overV;
@@ -353,13 +415,14 @@ function deposit(L,s0,s1){
 }
 // integral of the cdf: I(u) = ∫_{-∞}^{u} cdf(v) dv
 function icdf(u){
-  if(P.prof==="uniform"){ const h=P.dX/2; if(u<=-h) return 0; if(u>=h) return u; const t=u+h; return t*t/(2*P.dX); }
+  if(P.prof==="uniform"){ const h=DY/2; if(u<=-h) return 0; if(u>=h) return u; const t=u+h; return t*t/(2*DY); }
   if(P.prof==="flat"){ const a=Math.abs(u); return u*cdf(u) + J.H*gammaQ(2/J.p,Math.pow(a/J.w,J.p)); } // I(u) = u·G(u) + ∫_|u|^∞ t·g(t) dt
-  const s=P.dX/4, z=u/s; return s*( z*0.5*(1+erf(z/Math.SQRT2)) + Math.exp(-z*z/2)/Math.sqrt(2*Math.PI) );
+  const s=DY/4, z=u/s; return s*( z*0.5*(1+erf(z/Math.SQRT2)) + Math.exp(-z*z/2)/Math.sqrt(2*Math.PI) );
 }
 
 /* ---------- canvases ---------- */
 const mc=document.getElementById("map"), mx=mc.getContext("2d");
+const sdc=document.getElementById("side"), sfc=document.getElementById("front");
 const img=document.createElement("canvas"), ix=img.getContext("2d");
 let DPR=1, view;
 function turbo(t){ t=Math.max(0,Math.min(1,t));
@@ -392,13 +455,72 @@ function nozzle(){ if(S.line>=G.lines.length) return null; const L=G.lines[S.lin
 function cutDir(){ return document.getElementById("cut").value; } // "v": vertical cut (across 0° lines), "h": horizontal cut (across 90° lines)
 function xsecX(){ if(S.xsecX===null||S.xsecX>P.W) S.xsecX=P.W/2; return S.xsecX; }
 function xsecY(){ if(S.xsecY===null||S.xsecY>P.H) S.xsecY=P.H/2; return S.xsecY; }
+/* ---------- nozzle view on a flat surface (section in the plane of the nozzle axes and the normal) ----------
+   o = { angles:[deg], labels:[str], half:[mm, half footprint along the view], span:mm, firing, playing,
+         dir: +1 | -1 (arrow along the view) | "in" (travel into the page) | 0, speed:str,
+         part:[from,to] (mm, relative to the jet centre; null = whole width), marks:[mm] (neighbouring lines),
+         marksLabel:str, bottom:str, h:px } */
+function nozView(cv,o){
+  const DPRv=Math.min(2,window.devicePixelRatio||1), w=Math.round(cv.getBoundingClientRect().width)||500, h=o.h||200;
+  if(cv.width!==Math.round(w*DPRv)||cv.height!==Math.round(h*DPRv)){ cv.width=Math.round(w*DPRv); cv.height=Math.round(h*DPRv); cv.style.height=h+"px"; }
+  const c=cv.getContext("2d"), cs=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  c.setTransform(DPRv,0,0,DPRv,0,0); c.clearRect(0,0,w,h); c.fillStyle=cs("--soft"); c.fillRect(0,0,w,h);
+  const k=w/o.span, xs=w/2, ys=h-58, X=s=>xs+s*k, mono='"IBM Plex Mono",monospace';
+  // surface and part
+  const pa=o.part?Math.max(-2,X(o.part[0])):-2, pb=o.part?Math.min(w+2,X(o.part[1])):w+2;
+  c.strokeStyle=cs("--muted"); c.lineWidth=1; c.setLineDash([4,4]); c.beginPath(); c.moveTo(0,ys); c.lineTo(w,ys); c.stroke(); c.setLineDash([]);
+  if(pb>pa){ c.fillStyle="#b9bfc6"; c.fillRect(pa,ys,pb-pa,20); c.strokeStyle=cs("--ink"); c.lineWidth=1.5; c.beginPath(); c.moveTo(pa,ys); c.lineTo(pb,ys); c.stroke(); }
+  c.font='500 11px '+mono; c.fillStyle=cs("--muted"); c.textAlign="center";
+  if(o.part){ for(const e of o.part){ const xe=X(e); if(xe>36&&xe<w-36) c.fillText("part edge",xe,ys+33); }
+    if(pa>40) { c.textAlign="left"; c.fillText("overtravel",6,ys-6); } else if(pb<w-40){ c.textAlign="right"; c.fillText("overtravel",w-6,ys-6); } }
+  if(o.marks){ c.strokeStyle=cs("--ink"); c.lineWidth=1.5; for(const m of o.marks){ const xm=X(m); if(xm<2||xm>w-2) continue; c.beginPath(); c.moveTo(xm,ys+2); c.lineTo(xm,ys+10); c.stroke(); }
+    if(o.marksLabel){ c.fillStyle=cs("--muted"); c.textAlign="left"; c.fillText(o.marksLabel,6,ys+33); } }
+  // nozzles
+  const z=Math.max(0.55,Math.min(1,w/560)), He=Math.min(96*z,ys-44), Ht=He+30*z; // z: size of the nozzle drawing on narrow screens
+  for(let i=0;i<o.angles.length;i++){
+    const th=o.angles[i]*Math.PI/180, sn=Math.sin(th), cn=Math.cos(th), Wp=(hh,ww)=>[xs-hh*sn+ww*cn, ys-hh*cn-ww*sn], half=o.half[i]*k;
+    if(o.firing){ const e1=Wp(He,-6*z), e2=Wp(He,6*z); c.fillStyle="rgba(240,138,75,.25)"; c.beginPath(); c.moveTo(e1[0],e1[1]); c.lineTo(e2[0],e2[1]); c.lineTo(xs+half,ys); c.lineTo(xs-half,ys); c.closePath(); c.fill();
+      if(o.playing){ c.fillStyle="rgba(150,60,10,.75)"; for(let q=0;q<12;q++){ const f=Math.random(), u=Math.random()*2-1, ex=e1[0]+(e2[0]-e1[0])*(u+1)/2, ey=e1[1]+(e2[1]-e1[1])*(u+1)/2; c.beginPath(); c.arc(ex+(xs+u*half-ex)*f, ey+(ys-ey)*f, 1.4, 0, 7); c.fill(); } }
+      c.strokeStyle=cs("--accent"); c.lineWidth=2; c.beginPath(); c.moveTo(xs-half,ys+4+5*i); c.lineTo(xs+half,ys+4+5*i); c.stroke(); }
+    const b1=Wp(Ht,-14*z), b2=Wp(Ht,14*z), b3=Wp(He,6*z), b4=Wp(He,-6*z), p0=Wp(Ht,0), p1=Wp(Ht+16*z,0);
+    c.fillStyle=cs("--ink"); c.beginPath(); c.moveTo(b1[0],b1[1]); c.lineTo(b2[0],b2[1]); c.lineTo(b3[0],b3[1]); c.lineTo(b4[0],b4[1]); c.closePath(); c.fill();
+    c.strokeStyle=cs("--ink"); c.lineWidth=3; c.beginPath(); c.moveTo(p0[0],p0[1]); c.lineTo(p1[0],p1[1]); c.stroke();
+    c.strokeStyle=cs("--muted"); c.lineWidth=1; const ra=(i===0?38:30)*z; if(Math.abs(th)>0.001){ c.beginPath(); c.arc(xs,ys,ra,Math.min(-Math.PI/2-th,-Math.PI/2),Math.max(-Math.PI/2-th,-Math.PI/2)); c.stroke(); }
+    const lab=o.labels[i], q=Wp(Ht+16*z,0), out=o.angles[i]>0?-1:1;
+    c.font='600 '+Math.round(12*Math.max(0.85,z))+'px '+mono; c.fillStyle=cs("--ink"); const tw=c.measureText(lab).width;
+    if(Math.abs(th)<0.001&&o.angles.length===1){ c.textAlign="left"; c.fillText(lab,xs+16,Math.max(14,q[1]+6)); }
+    else { c.textAlign=out<0?"right":"left"; c.fillText(lab,out<0?Math.max(tw+4,q[0]-8):Math.min(w-tw-4,q[0]+8),Math.max(14,q[1]+6)); }
+  }
+  c.strokeStyle=cs("--ink"); c.lineWidth=1.2; c.setLineDash([3,3]); c.beginPath(); c.moveTo(xs,ys); c.lineTo(xs,ys-He+4); c.stroke(); c.setLineDash([]);
+  c.fillStyle=cs("--muted"); c.font='500 11px '+mono; c.textAlign="left"; c.fillText("normal",xs+5,ys-10);
+  // travel direction
+  if(o.firing&&o.dir){ c.strokeStyle=cs("--accent"); c.fillStyle=cs("--accent"); c.lineWidth=2.5; const ay=16;
+    if(o.dir==="in"){ const cx=w-30; c.beginPath(); c.arc(cx,ay+2,9,0,7); c.stroke(); c.beginPath(); c.moveTo(cx-5,ay-3); c.lineTo(cx+5,ay+7); c.moveTo(cx+5,ay-3); c.lineTo(cx-5,ay+7); c.stroke();
+      c.font='600 11px '+mono; c.textAlign="right"; c.fillText((o.speed||"")+" (into the page)",cx-16,ay+6); }
+    else { const d=o.dir, xA=d>0?w-64:w-20, xB=d>0?w-20:w-64; c.beginPath(); c.moveTo(xA,ay); c.lineTo(xB,ay); c.stroke(); c.beginPath(); c.moveTo(xB,ay); c.lineTo(xB-d*8,ay-5); c.lineTo(xB-d*8,ay+5); c.closePath(); c.fill();
+      c.font='600 11px '+mono; c.textAlign="right"; c.fillText(o.speed||"",w-72,ay+4); } }
+  if(o.bottom){ c.fillStyle=cs("--muted"); let fz=11; c.font='500 '+fz+'px '+mono; while(fz>6.5&&c.measureText(o.bottom).width>w-12){ fz-=0.5; c.font='500 '+fz+'px '+mono; } c.textAlign="left"; c.fillText(o.bottom,6,h-6); }
+}
+
+function drawSide(){
+  const nz=nozzle(), firing=!!nz, L=firing?nz.L:G.lines[G.lines.length-1], p=firing?L.a0+L.dir*S.s:L.a1, len=L.ang===0?P.W:P.H, span=L.ang===0?P.H:P.W;
+  const angs=M.nn===2?[P.th,P.th2]:[P.th], two=M.nn===2;
+  nozView(sdc,{angles:angs, labels:angs.map((a,i)=>(two?(i===0?"θ₁":"θ₂"):"θ")+" = "+nf(a,0)+"°"), half:M.ek.map(e=>P.dX*e/2), span:Math.max(5*P.dX*Math.max(...M.ek),4*P.dX),
+    firing, playing:S.playing&&!reduce, dir:L.dir, speed:"V = "+nf(P.V,0)+" mm/s", part:[-p,len-p],
+    bottom:(firing?("line "+(S.line+1)+" of "+G.lines.length+" · "+(L.ang===0?"0° raster, along x":"90° raster, along y")):"all rasters done")+" · footprint along the path "+M.ek.map(e=>nf(P.dX*e,1)).join(" / ")+" mm"});
+  // front view: across the current line, in the plane of the normal and the cross direction
+  const off=[]; for(let m=-6;m<=6;m++) off.push(m*P.delta);
+  nozView(sfc,{angles:[P.psi], labels:["ψ = "+nf(P.psi,0)+"°"], half:[DY/2], span:Math.max(4*DY,3*P.delta), firing, playing:S.playing&&!reduce, dir:"in", speed:"V = "+nf(P.V,0)+" mm/s",
+    part:[-L.c,span-L.c], marks:off.filter(m=>L.c+m>=-1e-9&&L.c+m<=span+1e-9),
+    bottom:(two?"plane of the 2 nozzles · ":"")+"ticks: lines (δ = "+nf(P.delta,1)+" mm) · jet across ΔX/cos ψ = "+nf(DY,1)+" mm"});
+}
 function drawMap(){
   const W=mc.width,H=mc.height; mx.setTransform(1,0,0,1,0,0); mx.clearRect(0,0,W,H);
   mx.fillStyle=css("--soft"); mx.fillRect(0,0,W,H);
   mx.imageSmoothingEnabled=true; mx.drawImage(img,X(0),Y(0),P.W*view.sc,P.H*view.sc);
   mx.strokeStyle=css("--ink"); mx.lineWidth=1.2*DPR; mx.strokeRect(X(0),Y(0),P.W*view.sc,P.H*view.sc);
   // central zone
-  const m=P.dX; if(P.W>2*m&&P.H>2*m){ mx.setLineDash([5*DPR,4*DPR]); mx.strokeRect(X(m),Y(m),(P.W-2*m)*view.sc,(P.H-2*m)*view.sc); mx.setLineDash([]); }
+  const m=DY; if(P.W>2*m&&P.H>2*m){ mx.setLineDash([5*DPR,4*DPR]); mx.strokeRect(X(m),Y(m),(P.W-2*m)*view.sc,(P.H-2*m)*view.sc); mx.setLineDash([]); }
   // path of the current raster
   const nz=nozzle(), cr=nz?nz.L.raster:M.plan.length-1;
   mx.strokeStyle="rgba(23,32,42,.45)"; mx.lineWidth=1*DPR; mx.setLineDash([3*DPR,4*DPR]); mx.beginPath();
@@ -412,7 +534,8 @@ function drawMap(){
   // nozzle footprint and direction arrow
   if(nz){ const h=P.dX/2;
     mx.fillStyle="rgba(240,138,75,.28)"; mx.strokeStyle=css("--accent"); mx.lineWidth=2*DPR;
-    mx.fillRect(X(nz.x-h),Y(nz.y-h),P.dX*view.sc,P.dX*view.sc); mx.strokeRect(X(nz.x-h),Y(nz.y-h),P.dX*view.sc,P.dX*view.sc);
+    for(const ek of M.ek){ const ha=DY/2, hx=nz.L.ang===0?h*ek:ha, hy=nz.L.ang===0?ha:h*ek; // footprint of each nozzle: ΔX·eₖ along the path, ΔX/cos ψ across
+      mx.fillRect(X(nz.x-hx),Y(nz.y-hy),2*hx*view.sc,2*hy*view.sc); mx.strokeRect(X(nz.x-hx),Y(nz.y-hy),2*hx*view.sc,2*hy*view.sc); }
     mx.fillStyle=css("--accent"); mx.beginPath(); mx.arc(X(nz.x),Y(nz.y),3.5*DPR,0,7); mx.fill();
     const d=nz.L.dir, a=14*DPR, b=7*DPR, e=5*DPR; mx.lineWidth=2.5*DPR;
     if(nz.L.ang===0){ const ay=Y(nz.y-h)-8*DPR, ax=X(nz.x);
@@ -431,7 +554,7 @@ function drawMap(){
 
 /* ---------- statistics ---------- */
 function stats(){
-  const NX=G.NX,NY=G.NY,m=P.dX; let i0=Math.ceil(m/G.hx), i1=Math.floor((P.W-m)/G.hx)-1, j0=Math.ceil(m/G.hy), j1=Math.floor((P.H-m)/G.hy)-1;
+  const NX=G.NX,NY=G.NY,m=DY; let i0=Math.ceil(m/G.hx), i1=Math.floor((P.W-m)/G.hx)-1, j0=Math.ceil(m/G.hy), j1=Math.floor((P.H-m)/G.hy)-1;
   if(i1<i0){ i0=0; i1=NX-1; } if(j1<j0){ j0=0; j1=NY-1; }
   let n=0,cs=0,cmin=1e9,cmax=0,ls=0,lmin=1e9,lmax=0;
   for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){ const l=S.lam[j*NX+i], c=1-Math.exp(-l); n++; cs+=c; ls+=l; if(c<cmin)cmin=c; if(c>cmax)cmax=c; if(l<lmin)lmin=l; if(l>lmax)lmax=l; }
@@ -460,6 +583,7 @@ function drawXsec(){
   el("text",{x:(L+W-R)/2,y:H-3,"text-anchor":"middle"},svg).textContent=v?"y across the 0° lines (mm), at x = "+nf(xsecX(),0)+" mm":"x across the 90° lines (mm), at y = "+nf(xsecY(),0)+" mm";
   const path=(arr,f,colr)=>{ let d=""; arr.forEach((q,j)=>{ d+=(j?"L":"M")+x((j+.5)*hstep).toFixed(1)+","+f(q).toFixed(1); }); el("path",{d,fill:"none",stroke:colr,"stroke-width":2},svg); };
   path(lam,yl,css("--theory")); path(cov,yc,css("--accent"));
+  EXP.set("xsec",[v?"y (mm), at x = "+nf(xsecX(),1)+" mm":"x (mm), at y = "+nf(xsecY(),1)+" mm","impacts per point λ","coverage τ (%)"],lam.map((l,j)=>[(j+.5)*hstep,l,cov[j]]));
 }
 function drawCn(){
   const svg=document.getElementById("cn"); svg.innerHTML="";
@@ -470,7 +594,9 @@ function drawCn(){
   el("text",{x:(L+W-R)/2,y:H-3,"text-anchor":"middle"},svg).textContent="number of rasters n (0° + 90°, in the chosen order)";
   if(nmax>total()) el("rect",{x:x(total()),y:T,width:x(nmax)-x(total()),height:H-T-B,fill:css("--soft")},svg);
   el("line",{x1:L,x2:W-R,y1:y(98),y2:y(98),stroke:css("--bare"),"stroke-dasharray":"3 4"},svg);
-  let d1="",d2=""; for(let k=0;k<=nmax;k++){ const c=covK(k).cov, a=100*(1-Math.exp(-M.Kd*k)); d1+=(k?"L":"M")+x(k)+","+y(c); d2+=(k?"L":"M")+x(k)+","+y(a); }
+  let d1="",d2=""; const rowsCn=[]; for(let k=0;k<=nmax;k++){ const c=covK(k).cov, a=100*(1-Math.exp(-M.Kd*k)); d1+=(k?"L":"M")+x(k)+","+y(c); d2+=(k?"L":"M")+x(k)+","+y(a);
+    const sp=S.rasterPts.find(q=>q.n===k); rowsCn.push([k,c,a,sp?sp.cov:null]); }
+  EXP.set("cn",["rasters n","stripe-corrected model (%)","average model (%)","simulation (%)"],rowsCn);
   el("path",{d:d2,fill:"none",stroke:css("--alt"),"stroke-width":2,"stroke-dasharray":"6 4"},svg);
   el("path",{d:d1,fill:"none",stroke:css("--theory"),"stroke-width":2.4},svg);
   for(const p of S.rasterPts) el("circle",{cx:x(p.n),cy:y(p.cov),r:4.5,fill:css("--accent"),stroke:css("--surface"),"stroke-width":1.5},svg);
@@ -480,16 +606,16 @@ function drawCn(){
 }
 function drawCd(){
   const svg=document.getElementById("cd"); svg.innerHTML="";
-  const dmax=Math.max(2*P.dX,P.delta*1.2), L=46,R=14,T=12,B=34,W=560,H=270;
+  const dmax=Math.max(2*DY,P.delta*1.2), L=46,R=14,T=12,B=34,W=560,H=270;
   const x=v=>L+(W-L-R)*v/dmax, y=v=>T+(H-T-B)*(1-v/100);
   for(let v=0;v<=100;v+=20){ el("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:css("--line")},svg); el("text",{x:L-6,y:y(v)+4,"text-anchor":"end"},svg).textContent=v+" %"; }
   const st=niceStep(dmax/7); for(let v=0;v<=dmax+1e-9;v+=st) el("text",{x:x(v),y:H-B+15,"text-anchor":"middle"},svg).textContent=nf(v,st<1?1:0);
   el("text",{x:(L+W-R)/2,y:H-3,"text-anchor":"middle"},svg).textContent="step between lines δ (mm)";
-  for(const [v,lab] of [[P.dX,"δ = ΔX"],[P.dX/2,"δ = ΔX/2"]]){ el("line",{x1:x(v),x2:x(v),y1:y(0),y2:y(100),stroke:css("--muted"),"stroke-dasharray":"2 4"},svg); el("text",{x:x(v)+4,y:y(94),"text-anchor":"start"},svg).textContent=lab; }
-  let d1="",d2=""; const N=70; for(let k=1;k<=N;k++){ const dl=dmax*k/N; const c=covCounts(1,0,rasterArrays(dl)).cov, a=100*(1-Math.exp(-M.Kd*P.delta/dl)); d1+=(k>1?"L":"M")+x(dl).toFixed(1)+","+y(c).toFixed(1); d2+=(k>1?"L":"M")+x(dl).toFixed(1)+","+y(a).toFixed(1); }
+  for(const [v,lab] of [[DY,"δ = ΔX"],[DY/2,"δ = ΔX/2"]]){ el("line",{x1:x(v),x2:x(v),y1:y(0),y2:y(100),stroke:css("--muted"),"stroke-dasharray":"2 4"},svg); el("text",{x:x(v)+4,y:y(94),"text-anchor":"start"},svg).textContent=lab; }
+  let d1="",d2=""; const N=70, rowsCd=[]; for(let k=1;k<=N;k++){ const dl=dmax*k/N; const c=covCounts(1,0,rasterArrays(dl)).cov, a=100*(1-Math.exp(-M.Kd*P.delta/dl)); rowsCd.push([dl,c,a]); d1+=(k>1?"L":"M")+x(dl).toFixed(1)+","+y(c).toFixed(1); d2+=(k>1?"L":"M")+x(dl).toFixed(1)+","+y(a).toFixed(1); }
   el("path",{d:d2,fill:"none",stroke:css("--alt"),"stroke-width":2,"stroke-dasharray":"6 4"},svg);
   el("path",{d:d1,fill:"none",stroke:css("--theory"),"stroke-width":2.4},svg);
-  const cur=covCounts(1,0).cov;
+  const cur=covCounts(1,0).cov; EXP.set("cd",["step δ (mm)","one raster, stripe-corrected (%)","one raster, average model (%)"],rowsCd);
   el("circle",{cx:x(P.delta),cy:y(cur),r:5.5,fill:css("--accent"),stroke:css("--surface"),"stroke-width":2},svg);
   document.getElementById("cdnote").textContent=(P.prof==="gauss"?"Gaussian jet: stripes appear when δ exceeds about ΔX/2 = 2σⱼ; ":P.prof==="flat"?"Flattened Gaussian (p = "+nf(P.pexp,1)+"): between the Gaussian and the uniform jet; the stripes depend on both p and δ (see the stripe amplitude in the calculation chain); ":"Uniform jet: stripes appear whenever ΔX/δ is not a whole number, and gaps when δ > ΔX; ")+"a smaller step raises the coverage of one raster, but each raster takes longer (area per second = V·δ).";
 }
@@ -512,7 +638,7 @@ function timeFor(nr){ if(!isFinite(nr)) return Infinity; const T=M.plan.length; 
 
 /* ---------- texts ---------- */
 function fillTexts(){
-  const ov=P.dX/P.delta, ct=covCounts(P.n0,P.n90), one=covCounts(1,0), same0=covCounts(total(),0);
+  const ov=DY/P.delta, ct=covCounts(P.n0,P.n90), one=covCounts(1,0), same0=covCounts(total(),0);
   document.getElementById("rOv").textContent=nf(ov,2);
   document.getElementById("rAvg").textContent=nf(100*(1-Math.exp(-M.Kd*total())),1)+" %";
   document.getElementById("rStrTh").textContent=nf(ct.cov,1)+" %";
@@ -533,6 +659,7 @@ function fillTexts(){
   document.getElementById("c1").innerHTML=sci(M.Nd,2)+" /s";
   document.getElementById("c0").innerHTML=sci(M.ED3*1e18,3)+" µm³ (≙ "+nf(Math.cbrt(M.ED3)*1e6,0)+" µm)";
   document.getElementById("c2").innerHTML=sci(M.a,2)+" mm²";
+  const fs=M.fk.reduce((s,x)=>s+x,0); document.getElementById("cTh").textContent=(P.psi>0?"ψ = "+nf(P.psi,0)+"°: cos γ = cos θ·cos ψ, jet "+nf(DY,1)+" mm wide across the path. ":"")+(M.nn===2?"(2 nozzles: f(θ₁) + f(θ₂) = "+nf(M.fk[0],3)+" + "+nf(M.fk[1],3)+" = "+nf(fs,3)+" times one normal nozzle; time to 98 % × "+nf(1/fs,2)+")":(P.th>0||P.psi>0)?"(here f = "+nf(fs,3)+", time to 98 % × "+nf(1/fs,2)+")":"(here θ = ψ = 0°, f = 1)");
   document.getElementById("c3").textContent="K = "+nf(M.K1,3);
   document.getElementById("c4").textContent="K_δ = "+nf(M.Kd,3);
   document.getElementById("c5").textContent="mean "+nf(ct.lmean,2);
@@ -546,7 +673,7 @@ function fillTexts(){
   document.getElementById("c8").innerHTML=P.n0>0&&P.n90>0? nf(ct.cov,1)+" % vs "+nf(same0.cov,1)+" % all at 0°" : (P.n90>0?"90° only":"0° only");
   document.getElementById("rPlan").textContent=M.plan.map(a=>a+"°").join(" · ");
   const w=document.getElementById("warn");
-  w.textContent = (P.prof==="uniform"&&P.delta>P.dX) ? (P.n0>0&&P.n90>0?"Step larger than the jet: untreated squares remain where the gaps of the 0° and 90° rasters cross, whatever the number of rasters.":"Step larger than the jet: untreated strips remain between the lines whatever the number of rasters.")
+  w.textContent = (P.prof==="uniform"&&P.delta>DY) ? (P.n0>0&&P.n90>0?"Step larger than the jet: untreated squares remain where the gaps of the 0° and 90° rasters cross, whatever the number of rasters.":"Step larger than the jet: untreated strips remain between the lines whatever the number of rasters.")
     : (amp>0.15 ? "Visible stripes: λ of one raster varies by "+nf(100*amp,0)+" % across the lines. Reduce the step δ"+(P.prof==="gauss"?" below about ΔX/2":P.prof==="flat"?"":" to ΔX divided by a whole number")+", use the half-step offset"+(P.n0>0&&P.n90>0?"":", or cross the rasters at 0° and 90°")+"." : "");
   lamScale=Math.max(1e-9,Math.max(ct.lmax,ct.lmean)*1.05); NM=nfScale();
   const tk=document.getElementById("ticks"); tk.innerHTML=""; const vw=document.getElementById("view").value;
@@ -592,7 +719,7 @@ function tick(now){
     advance(dt*mult*len/1.6); dirty=true;
   }
   if(dirty && (++frame%3===0)){ paintField(); drawXsec(); updateReads(); dirty=false; }
-  drawMap(); if(frame%10===0) updateReads();
+  drawMap(); drawSide(); if(frame%10===0) updateReads();
   requestAnimationFrame(tick);
 }
 
@@ -620,8 +747,8 @@ mc.addEventListener("click",e=>{ const p=mapPos(e); if(p.x<0||p.x>P.W||p.y<0||p.
 
 /* ---------- parameter inputs ---------- */
 const box=document.getElementById("params");
-function updOnly(){ for(const s of SPEC){ if(!s.only) continue; const off=P.prof!==s.only, row=document.getElementById("in-"+s.k).closest(".param");
-  row.style.opacity=off?.45:1; row.querySelectorAll("input").forEach(e=>e.disabled=off); row.title=off?"Used only with the flattened Gaussian profile":""; } }
+function updOnly(){ for(const s of SPEC){ if(!s.only) continue; const off=typeof s.only==="function"?!s.only():P.prof!==s.only, row=document.getElementById("in-"+s.k).closest(".param");
+  row.style.opacity=off?.45:1; row.querySelectorAll("input").forEach(e=>e.disabled=off); row.title=off?(s.onlyMsg||"Used only with the flattened Gaussian profile"):""; } }
 function sync(s){ if(s.sel){ document.getElementById("in-"+s.k).value=P[s.k]; return; } document.getElementById("rg-"+s.k).value=P[s.k]; document.getElementById("in-"+s.k).value=P[s.k]; }
 for(const s of SPEC){
   const d=document.createElement("div"); d.className="param";
@@ -635,6 +762,10 @@ for(const s of SPEC){
 }
 let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ resize(); paintField(); },120); });
 restart(!reduce);
+EXP.grid("map",()=>{ const vw=document.getElementById("view").value, cols=["y (mm) \\ x (mm), "+(vw==="cov"?"coverage τ (%)":vw==="nf"?"coverage NF L 06-832 (%)":"impacts per point λ")];
+  for(let i=0;i<G.NX;i++) cols.push(+((i+.5)*G.hx).toFixed(3)); const rows=[];
+  for(let j=0;j<G.NY;j++){ const r=[+((j+.5)*G.hy).toFixed(3)]; for(let i=0;i<G.NX;i++){ const l=S.lam[j*G.NX+i]; r.push(vw==="cov"?100*(1-Math.exp(-l)):vw==="nf"?locNF(l):l); } rows.push(r); } return {cols,rows}; });
+EXP.init("extended-coverage",[{id:"map",csv:true,tip:"Download the map as shown (coverage, λ or NF coverage at every point) as a CSV file"},{id:"side"},{id:"front"},{id:"xsec",csv:true},{id:"cn",csv:true},{id:"cd",csv:true}]);
 requestAnimationFrame(t=>{ last=t; tick(t); });
 })();
 </script>
